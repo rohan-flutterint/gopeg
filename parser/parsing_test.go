@@ -12,7 +12,7 @@ func TestName(t *testing.T) {
 			NewNonterminal("Product"),
 			NewRepetition(
 				NewJunction(
-					NewChoice(NewTerminals("+"), NewTerminals("-")),
+					NewChoice(NewToken("+"), NewToken("-")),
 					NewNonterminal("Product"),
 				),
 			),
@@ -21,32 +21,21 @@ func TestName(t *testing.T) {
 			NewNonterminal("Value"),
 			NewRepetition(
 				NewJunction(
-					NewChoice(NewTerminals("*"), NewTerminals("/")),
+					NewChoice(NewToken("*"), NewToken("/")),
 					NewNonterminal("Value"),
 				),
 			),
 		)),
-		NewRule("Digit", NewChoice(
-			NewTerminals("0"),
-			NewTerminals("1"),
-			NewTerminals("2"),
-			NewTerminals("3"),
-			NewTerminals("4"),
-			NewTerminals("5"),
-			NewTerminals("6"),
-			NewTerminals("7"),
-			NewTerminals("8"),
-			NewTerminals("9"),
-		)),
+		NewRule("Digit", NewInterval('0', '9')),
 		NewRule("Value", NewChoice(
 			NewJunction(
 				NewNonterminal("Digit"),
 				NewRepetition(NewNonterminal("Digit")),
 			),
 			NewJunction(
-				NewTerminals("("),
+				NewToken("("),
 				NewNonterminal("Expr"),
-				NewTerminals(")"),
+				NewToken(")"),
 			),
 		)),
 	}

@@ -7,8 +7,14 @@ import (
 )
 
 type (
-	Expr        interface{}
-	terminals   struct{ Terminals string }
+	Expr      interface{}
+	terminals interface {
+		Accept(s string) (int, bool)
+		Description() string
+	}
+
+	token       struct{ Token string }
+	interval    struct{ Lower, Upper byte }
 	nonterminal struct{ NonTerminal string }
 	junction    struct{ Exprs []Expr }
 	choice      struct{ Exprs []Expr }
@@ -18,6 +24,22 @@ type (
 	optional struct{ Expr Expr }
 	ensure   struct{ Expr Expr }
 )
+
+func (t token) Accept(s string) (int, bool) {
+	if len(s) < len(t.Token) || s[0:len(t.Token)] != t.Token {
+		return 0, false
+	}
+	return len(t.Token), true
+}
+func (t token) Description() string { return t.Token }
+
+func (i interval) Accept(s string) (int, bool) {
+	if len(s) == 0 || s[0] < i.Lower || s[0] > i.Upper {
+		return 0, false
+	}
+	return 1, true
+}
+func (i interval) Description() string { return fmt.Sprintf("[%v-%v]", i.Lower, i.Upper) }
 
 type Rule struct {
 	Name string
@@ -44,14 +66,15 @@ type Rules []Rule
 
 func NewRule(name string, expression Expr) Rule { return Rule{name, expression} }
 
-func NewTerminals(ts string) Expr    { return terminals{ts} }
-func NewJunction(exprs ...Expr) Expr { return junction{exprs} }
-func NewChoice(exprs ...Expr) Expr   { return choice{exprs} }
-func NewRepetition(expr Expr) Expr   { return repetition{expr} }
-func NewNegation(expr Expr) Expr     { return negation{expr} }
-func NewNonterminal(nt string) Expr  { return nonterminal{nt} }
-func NewOptional(expr Expr) Expr     { return optional{expr} }
-func NewEnsure(expr Expr) Expr       { return ensure{expr} }
+func NewToken(t string) Expr             { return token{Token: t} }
+func NewInterval(lower, upper byte) Expr { return interval{lower, upper} }
+func NewJunction(exprs ...Expr) Expr     { return junction{exprs} }
+func NewChoice(exprs ...Expr) Expr       { return choice{exprs} }
+func NewRepetition(expr Expr) Expr       { return repetition{expr} }
+func NewNegation(expr Expr) Expr         { return negation{expr} }
+func NewNonterminal(nt string) Expr      { return nonterminal{nt} }
+func NewOptional(expr Expr) Expr         { return optional{expr} }
+func NewEnsure(expr Expr) Expr           { return ensure{expr} }
 
 func NonTerminalName(expr Expr) (string, bool) {
 	switch peg := expr.(type) {
@@ -65,7 +88,7 @@ func NonTerminalName(expr Expr) (string, bool) {
 func StringExpression(expr Expr) string {
 	switch peg := expr.(type) {
 	case terminals:
-		return fmt.Sprintf("'%v'", peg.Terminals)
+		return fmt.Sprintf("'%v'", peg.Description())
 	case nonterminal:
 		return fmt.Sprintf("%v", peg.NonTerminal)
 	case repetition:

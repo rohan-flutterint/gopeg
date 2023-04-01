@@ -12,7 +12,7 @@ func TestOrdering(t *testing.T) {
 	//		NewNonterminal("Product"),
 	//		NewRepetition(
 	//			NewJunction(
-	//				NewChoice(NewTerminals("+"), NewTerminals("-")),
+	//				NewChoice(NewToken("+"), NewToken("-")),
 	//				NewNonterminal("Product"),
 	//			),
 	//		),
@@ -21,22 +21,22 @@ func TestOrdering(t *testing.T) {
 	//		NewNonterminal("Value"),
 	//		NewRepetition(
 	//			NewJunction(
-	//				NewChoice(NewTerminals("*"), NewTerminals("/")),
+	//				NewChoice(NewToken("*"), NewToken("/")),
 	//				NewNonterminal("Value"),
 	//			),
 	//		),
 	//	)),
 	//	NewRule("Digit", NewChoice(
-	//		NewTerminals("0"),
-	//		NewTerminals("1"),
-	//		NewTerminals("2"),
-	//		NewTerminals("3"),
-	//		NewTerminals("4"),
-	//		NewTerminals("5"),
-	//		NewTerminals("6"),
-	//		NewTerminals("7"),
-	//		NewTerminals("8"),
-	//		NewTerminals("9"),
+	//		NewToken("0"),
+	//		NewToken("1"),
+	//		NewToken("2"),
+	//		NewToken("3"),
+	//		NewToken("4"),
+	//		NewToken("5"),
+	//		NewToken("6"),
+	//		NewToken("7"),
+	//		NewToken("8"),
+	//		NewToken("9"),
 	//	)),
 	//	NewRule("Value", NewChoice(
 	//		NewJunction(
@@ -44,9 +44,9 @@ func TestOrdering(t *testing.T) {
 	//			NewRepetition(NewNonterminal("Digit")),
 	//		),
 	//		NewJunction(
-	//			NewTerminals("("),
+	//			NewToken("("),
 	//			NewNonterminal("Expr"),
-	//			NewTerminals(")"),
+	//			NewToken(")"),
 	//		),
 	//	)),
 	//}
@@ -60,7 +60,7 @@ func TestOrdering(t *testing.T) {
 func TestCycle(t *testing.T) {
 	rs := Rules{
 		NewRule("A", NewJunction(NewNonterminal("B"), NewNonterminal("A"))),
-		NewRule("B", NewTerminals("hello")),
+		NewRule("B", NewToken("hello")),
 	}
 	_, _, err := rs.order()
 	assert.Nil(t, err)

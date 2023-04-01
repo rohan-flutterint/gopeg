@@ -56,10 +56,8 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 	advance := func(i int, expr Expr) step {
 		switch peg := expr.(type) {
 		case terminals:
-			if i+len(peg.Terminals) <= len(text) && text[i:i+len(peg.Terminals)] == peg.Terminals {
-				return step{ok: true, advance: len(peg.Terminals)}
-			}
-			return step{ok: false, advance: 0}
+			advance, ok := peg.Accept(text[i:])
+			return step{ok: ok, advance: advance}
 		case nonterminal:
 			return table[i][position[peg.NonTerminal]]
 		default:
@@ -122,6 +120,8 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 		}
 		switch peg := access[current.nonTerminal].Expr.(type) {
 		case terminals:
+			next := &parsingNode{nonTerminal: "", start: current.start, end: current.end}
+			current.children = append(current.children, next)
 			continue
 		case negation:
 			continue

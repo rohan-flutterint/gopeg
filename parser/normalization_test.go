@@ -26,7 +26,7 @@ func TestSimpleNormalization(t *testing.T) {
 func TestNormalizationWithTerminals(t *testing.T) {
 	r := Rules{NewRule("r", NewChoice(
 		NewJunction(NewNonterminal("A"), NewNegation(NewChoice(NewNonterminal("B"), NewNonterminal("C")))),
-		NewJunction(NewTerminals("hi"), NewNonterminal("D")),
+		NewJunction(NewToken("hi"), NewNonterminal("D")),
 	))}
 	n, _ := r.normalize()
 	assert.Equal(t, r.normalized(), false)
@@ -36,7 +36,7 @@ func TestNormalizationWithTerminals(t *testing.T) {
 		Rule{"r#1", NewJunction(NewNonterminal("A#0"), NewNonterminal("r#2"))},
 		Rule{"r#2", NewNegation(NewNonterminal("r#3"))},
 		Rule{"r#3", NewChoice(NewNonterminal("B#0"), NewNonterminal("C#0"))},
-		Rule{"r#4", NewJunction(NewTerminals("hi"), NewNonterminal("D#0"))},
+		Rule{"r#4", NewJunction(NewToken("hi"), NewNonterminal("D#0"))},
 	})
 	t.Logf("\ninitial:\n%vdeconstructed:\n%v", r, n)
 }

@@ -14,7 +14,7 @@ func TestDesugar(t *testing.T) {
 	d := r.desugar()
 	assert.Equal(t, d,
 		NewRule("S", NewJunction(
-			NewChoice(NewNonterminal("A"), NewTerminals("")),
+			NewChoice(NewNonterminal("A"), NewToken("")),
 			NewNegation(NewNegation(NewNonterminal("B"))),
 			NewRepetition(NewNonterminal("C")),
 		)),

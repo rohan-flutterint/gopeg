@@ -13,7 +13,7 @@ func desugarMany(exprs []Expr) []Expr {
 func desugar(expr Expr) Expr {
 	switch peg := expr.(type) {
 	case optional:
-		return choice{Exprs: []Expr{desugar(peg.Expr), terminals{Terminals: ""}}}
+		return choice{Exprs: []Expr{desugar(peg.Expr), NewToken("")}}
 	case ensure:
 		return negation{negation{Expr: desugar(peg.Expr)}}
 	case terminals:
