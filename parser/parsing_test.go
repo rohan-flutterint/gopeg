@@ -5,51 +5,51 @@ import (
 	"testing"
 )
 
-func TestName(t *testing.T) {
+func TestArithmetic(t *testing.T) {
 	rs := Rules{
-		NewRule("Expr", NewNonterminal("Sum")),
+		NewRule("Expr", NewSymbol("Sum")),
 		NewRule("Sum", NewJunction(
-			NewNonterminal("Product"),
+			NewSymbol("Product"),
 			NewRepetition(
 				NewJunction(
 					NewChoice(NewToken("+"), NewToken("-")),
-					NewNonterminal("Product"),
+					NewSymbol("Product"),
 				),
 			),
 		)),
 		NewRule("Product", NewJunction(
-			NewNonterminal("Value"),
+			NewSymbol("Value"),
 			NewRepetition(
 				NewJunction(
 					NewChoice(NewToken("*"), NewToken("/")),
-					NewNonterminal("Value"),
+					NewSymbol("Value"),
 				),
 			),
 		)),
-		NewRule("Digit", NewInterval('0', '9')),
+		NewRule("Digit", NewMatch("[0-9]")),
 		NewRule("Value", NewChoice(
 			NewJunction(
-				NewNonterminal("Digit"),
-				NewRepetition(NewNonterminal("Digit")),
+				NewSymbol("Digit"),
+				NewRepetition(NewSymbol("Digit")),
 			),
 			NewJunction(
 				NewToken("("),
-				NewNonterminal("Expr"),
+				NewSymbol("Expr"),
 				NewToken(")"),
 			),
 		)),
 	}
 	text := "10+2"
-	n1, err := rs.parse("Expr", text)
+	n1, err := Parse(rs, "Expr", []byte(text))
 	assert.Nil(t, err)
 	start, end := n1.Range()
 	assert.Equal(t, end-start, 4)
-	t.Logf("\n%v\n", StringParsingNode(n1, text))
+	t.Logf("\n%v\n", StringParsingNode(n1, []byte(text)))
 
 	text = "1+(2*4-5)-10*44"
-	n2, err := rs.parse("Expr", text)
+	n2, err := Parse(rs, "Expr", []byte(text))
 	assert.Nil(t, err)
 	start, end = n2.Range()
 	assert.Equal(t, end-start, 15)
-	t.Logf("\n%v\n", StringParsingNode(n2, text))
+	t.Logf("\n%v\n", StringParsingNode(n2, []byte(text)))
 }

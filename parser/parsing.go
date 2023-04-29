@@ -11,15 +11,11 @@ type step struct {
 	advance int
 }
 
-func StringParsingNode(n ParsingNode, text string) string {
+func StringParsingNode[T any](n ParsingNode, text []T) string {
 	var printNode func(*strings.Builder, ParsingNode, int)
 	printNode = func(b *strings.Builder, pn ParsingNode, offset int) {
 		start, end := pn.Range()
-		if pn.NonTerminal() == "" {
-			b.WriteString(fmt.Sprintf("%v'%v'\n", strings.Repeat(" ", offset), text[start:end]))
-		} else {
-			b.WriteString(fmt.Sprintf("%v%v: [%v..%v)\n", strings.Repeat(" ", offset), pn.NonTerminal(), start, end))
-		}
+		b.WriteString(fmt.Sprintf("%v%v: [%v..%v)\n", strings.Repeat(" ", offset), pn.Symbol(), start, end))
 		for _, c := range pn.Children() {
 			printNode(b, c, offset+2)
 		}
@@ -34,11 +30,13 @@ var (
 	TextNotMatchErr = errors.New("TextNotMatch")
 )
 
-func (rs Rules) parse(root, text string) (ParsingNode, error) {
+func Parse[T any](rs Rules, root string, text []T) (ParsingNode, error) {
+	rs = rs.desugar()
 	n, mapping := rs, NewIdTransformation()
 	if !rs.normalized() {
 		n, mapping = rs.normalize()
 	}
+	//fmt.Printf("n: %v\n", n)
 	access := make(map[string]Rule)
 	for _, r := range n {
 		access[r.Name] = r
@@ -48,6 +46,7 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	table := make([][]step, len(text)+1)
 	for i := 0; i <= len(text); i++ {
 		table[i] = make([]step, len(order))
@@ -58,20 +57,21 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 		case terminals:
 			advance, ok := peg.Accept(text[i:])
 			return step{ok: ok, advance: advance}
-		case nonterminal:
-			return table[i][position[peg.NonTerminal]]
+		case symbol:
+			return table[i][position[peg.Symbol]]
 		default:
 			panic(fmt.Errorf("invalid usage of advance: unexpected peg expression type: %#v", expr))
 		}
 	}
+
 	for i := len(text); i >= 0; i-- {
 		for s := len(order) - 1; s >= 0; s-- {
 			switch peg := access[order[s]].Expr.(type) {
 			case terminals:
 				table[i][s] = advance(i, peg)
-			case nonterminal:
+			case symbol:
 				table[i][s] = advance(i, peg)
-			case repetition:
+			case kleene:
 				next := advance(i, peg.Expr)
 				if next.ok && next.advance > 0 {
 					table[i][s] = step{ok: true, advance: table[i+next.advance][s].advance + next.advance}
@@ -106,50 +106,51 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 					table[i][s] = step{ok: true, advance: 0}
 				}
 			}
+			//fmt.Printf("i: %v, s: %v, %v (%v)\n", i, s, table[i][s], access[order[s]])
 		}
 	}
+
 	rootN := mapping.Forward.get(root)
+	//fmt.Printf("root: %v, rootN: %v %v\n", root, rootN, position[rootN])
 	if !table[0][position[rootN]].ok {
 		return nil, TextNotMatchErr
 	}
-	derivation := []*parsingNode{{nonTerminal: rootN, start: 0, end: table[0][position[rootN]].advance}}
+	derivation := []*parsingNode{NewParsingNode[T](rootN, 0, table[0][position[rootN]].advance, text)}
 	for i := 0; i < len(derivation); i++ {
 		current := derivation[i]
-		if current.nonTerminal == "" {
+		if current.symbol == "" {
 			continue
 		}
-		switch peg := access[current.nonTerminal].Expr.(type) {
+		switch peg := access[current.symbol].Expr.(type) {
 		case terminals:
-			next := &parsingNode{nonTerminal: "", start: current.start, end: current.end}
-			current.children = append(current.children, next)
 			continue
 		case negation:
 			continue
-		case nonterminal:
-			next := &parsingNode{nonTerminal: peg.NonTerminal, start: current.start, end: current.end}
+		case symbol:
+			next := NewParsingNode[T](peg.Symbol, current.start, current.end, text)
 			current.children = append(current.children, next)
 			derivation = append(derivation, next)
 			continue
-		case repetition:
+		case kleene:
 			p := current.start
 			for {
 				step := advance(p, peg.Expr)
-				if !step.ok {
+				if !step.ok || step.advance == 0 {
 					break
 				}
-				nt, _ := NonTerminalName(peg.Expr)
-				next := &parsingNode{nonTerminal: nt, start: p, end: p + step.advance}
-				current.children = append(current.children, next)
-				derivation = append(derivation, next)
+				if s, ok := SymbolName(peg.Expr); ok {
+					next := NewParsingNode[T](s, p, p+step.advance, text)
+					current.children = append(current.children, next)
+					derivation = append(derivation, next)
+				}
 				p += step.advance
 			}
 		case junction:
 			p := current.start
 			for _, j := range peg.Exprs {
 				step := advance(p, j)
-				if step.advance > 0 {
-					nt, _ := NonTerminalName(j)
-					next := &parsingNode{nonTerminal: nt, start: p, end: p + step.advance}
+				if s, ok := SymbolName(j); ok {
+					next := NewParsingNode[T](s, p, p+step.advance, text)
 					current.children = append(current.children, next)
 					derivation = append(derivation, next)
 				}
@@ -161,9 +162,8 @@ func (rs Rules) parse(root, text string) (ParsingNode, error) {
 				if !step.ok {
 					continue
 				}
-				if step.advance > 0 {
-					nt, _ := NonTerminalName(c)
-					next := &parsingNode{nonTerminal: nt, start: current.start, end: current.start + step.advance}
+				if s, ok := SymbolName(c); ok {
+					next := NewParsingNode[T](s, current.start, current.start+step.advance, text)
 					current.children = append(current.children, next)
 					derivation = append(derivation, next)
 				}

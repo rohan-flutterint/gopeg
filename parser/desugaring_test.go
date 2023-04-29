@@ -7,16 +7,16 @@ import (
 
 func TestDesugar(t *testing.T) {
 	r := NewRule("S", NewJunction(
-		NewOptional(NewNonterminal("A")),
-		NewEnsure(NewNonterminal("B")),
-		NewRepetition(NewNonterminal("C")),
+		NewOptional(NewSymbol("A")),
+		NewEnsure(NewSymbol("B")),
+		NewRepetition(NewSymbol("C")),
 	))
 	d := r.desugar()
 	assert.Equal(t, d,
 		NewRule("S", NewJunction(
-			NewChoice(NewNonterminal("A"), NewToken("")),
-			NewNegation(NewNegation(NewNonterminal("B"))),
-			NewRepetition(NewNonterminal("C")),
+			NewChoice(NewSymbol("A"), NewEmpty()),
+			NewNegation(NewNegation(NewSymbol("B"))),
+			NewRepetition(NewSymbol("C")),
 		)),
 	)
 	t.Logf("\ninitial:\n%v\ndesugared:\n%v", r, d)

@@ -2,36 +2,36 @@ package parser
 
 import "fmt"
 
-func format(name string, id int) string { return fmt.Sprintf("%v#%v", name, id) }
+func createName(name string, id int) string { return fmt.Sprintf("%v#%v", name, id) }
 
 func leaf(e Expr) (Expr, bool) {
 	switch peg := e.(type) {
 	case terminals:
 		return peg, true
-	case nonterminal:
-		return nonterminal{NonTerminal: format(peg.NonTerminal, 0)}, true
+	case symbol:
+		return symbol{Symbol: createName(peg.Symbol, 0)}, true
 	}
 	return nil, false
 }
 
 func normalize(expr Expr, name string, id int) Rules {
-	rootName := format(name, id)
+	rootName := createName(name, id)
 	switch peg := expr.(type) {
 	case terminals:
 		return Rules{{rootName, peg}}
-	case nonterminal:
-		return Rules{{rootName, nonterminal{NonTerminal: format(peg.NonTerminal, 0)}}}
-	case repetition:
+	case symbol:
+		return Rules{{rootName, symbol{Symbol: createName(peg.Symbol, 0)}}}
+	case kleene:
 		if l, ok := leaf(peg.Expr); ok {
-			return Rules{Rule{rootName, repetition{l}}}
+			return Rules{Rule{rootName, kleene{l}}}
 		}
-		root := Rule{rootName, repetition{nonterminal{format(name, id+1)}}}
+		root := Rule{rootName, kleene{symbol{createName(name, id+1)}}}
 		return append(Rules{root}, normalize(peg.Expr, name, id+1)...)
 	case negation:
 		if l, ok := leaf(peg.Expr); ok {
 			return Rules{Rule{rootName, negation{l}}}
 		}
-		root := Rule{rootName, negation{nonterminal{format(name, id+1)}}}
+		root := Rule{rootName, negation{symbol{createName(name, id+1)}}}
 		return append(Rules{root}, normalize(peg.Expr, name, id+1)...)
 	case junction:
 		js := Rules{}
@@ -40,7 +40,7 @@ func normalize(expr Expr, name string, id int) Rules {
 			if l, ok := leaf(j); ok {
 				roots = append(roots, l)
 			} else {
-				roots = append(roots, nonterminal{format(name, id+1+len(js))})
+				roots = append(roots, symbol{createName(name, id+1+len(js))})
 				js = append(js, normalize(j, name, id+1+len(js))...)
 			}
 		}
@@ -53,7 +53,7 @@ func normalize(expr Expr, name string, id int) Rules {
 			if l, ok := leaf(c); ok {
 				roots = append(roots, l)
 			} else {
-				roots = append(roots, nonterminal{format(name, id+1+len(cs))})
+				roots = append(roots, symbol{createName(name, id+1+len(cs))})
 				cs = append(cs, normalize(c, name, id+1+len(cs))...)
 			}
 		}
@@ -68,7 +68,7 @@ func (rs Rules) normalize() (Rules, Transformation) {
 	rules := make(Rules, 0)
 	mapping := make(map[string]string)
 	for _, r := range rs {
-		mapping[r.Name] = format(r.Name, 0)
+		mapping[r.Name] = createName(r.Name, 0)
 		rules = append(rules, normalize(r.Expr, r.Name, 0)...)
 	}
 	return rules, NewTransformation(mapping)
@@ -87,9 +87,9 @@ func (r Rule) normalized() bool {
 	switch peg := r.Expr.(type) {
 	case terminals:
 		return true
-	case nonterminal:
+	case symbol:
 		return true
-	case repetition:
+	case kleene:
 		_, ok := leaf(peg.Expr)
 		return ok
 	case negation:

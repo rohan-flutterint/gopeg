@@ -1,5 +1,7 @@
 package parser
 
+import "strings"
+
 type Mapping struct {
 	id bool
 	m  map[string]string
@@ -27,12 +29,21 @@ func (t Mapping) get(s string) string {
 }
 
 func (t Mapping) transform(n ParsingNode) []ParsingNode {
-	if t.id || n.NonTerminal() == "" {
+	if t.id {
 		return []ParsingNode{n}
 	}
-	if name, ok := t.m[n.NonTerminal()]; ok {
+	symbol := n.Symbol()
+	if name, ok := t.m[symbol]; !strings.HasPrefix(symbol, "#") && ok {
 		start, end := n.Range()
-		next := &parsingNode{nonTerminal: name, start: start, end: end, children: make([]ParsingNode, 0)}
+		attrs := make(map[string]any)
+		for key, value := range n.Attrs() {
+			if key == symbol {
+				attrs[name] = value
+			} else {
+				attrs[key] = value
+			}
+		}
+		next := &parsingNode{symbol: name, start: start, end: end, children: make([]ParsingNode, 0), attrs: attrs}
 		for _, child := range n.Children() {
 			next.children = append(next.children, t.transform(child)...)
 		}

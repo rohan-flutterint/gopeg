@@ -1,0 +1,12 @@
+Definitions: Definition*
+Definition: Name:{Token} {Control:":"} Rule {EndOfLine}
+Rule: Choice ({Control:"/"} Choice)*
+Choice: Junction+
+Junction: (
+    Alias:(Token {Control:":"})?
+    Prefix:{Control:=~"[!&]"}?
+    Expression:({String} / {Token} / Map / {Open} Rule {Close})
+    Suffix:{Control:=~"[*+?]"}?
+)
+Map: {Control:"{"} #KeyValue ({Control:","} #KeyValue)* {Control:"}"}
+#KeyValue: Key:({String} / {Token}) Value:({Control:":"} (String / Regex / Any))?

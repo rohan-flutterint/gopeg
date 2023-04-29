@@ -1,6 +1,8 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func desugarMany(exprs []Expr) []Expr {
 	result := make([]Expr, 0, len(exprs))
@@ -13,19 +15,26 @@ func desugarMany(exprs []Expr) []Expr {
 func desugar(expr Expr) Expr {
 	switch peg := expr.(type) {
 	case optional:
-		return choice{Exprs: []Expr{desugar(peg.Expr), NewToken("")}}
+		return choice{Exprs: []Expr{desugar(peg.Expr), NewEmpty()}}
 	case ensure:
 		return negation{negation{Expr: desugar(peg.Expr)}}
+	case repetition:
+		exprs := make([]Expr, 0, peg.min+1)
+		for i := 0; i < peg.min; i++ {
+			exprs = append(exprs, peg.Expr)
+		}
+		exprs = append(exprs, kleene{peg.Expr})
+		return junction{exprs}
 	case terminals:
 		return peg
-	case nonterminal:
+	case symbol:
 		return peg
 	case junction:
 		return junction{desugarMany(peg.Exprs)}
 	case choice:
 		return choice{desugarMany(peg.Exprs)}
-	case repetition:
-		return repetition{desugar(peg.Expr)}
+	case kleene:
+		return kleene{desugar(peg.Expr)}
 	case negation:
 		return negation{desugar(peg.Expr)}
 	default:

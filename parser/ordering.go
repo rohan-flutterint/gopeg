@@ -11,25 +11,45 @@ func add(graph map[string][]string, a, b string) {
 	graph[a] = append(graph[a], b)
 }
 
-func orderFrom(v string, graph map[string][]string, used map[string]bool, order *[]string) {
-	used[v] = true
+const (
+	white = 0
+	gray  = 1
+	black = 2
+)
+
+func orderFrom(v string, graph map[string][]string, color map[string]int, parent map[string]string, order *[]string) error {
+	color[v] = gray
 	for _, u := range graph[v] {
-		if used[u] {
-			continue
+		if color[u] == white {
+			parent[u] = v
+			if err := orderFrom(u, graph, color, parent, order); err != nil {
+				return err
+			}
+		} else if color[u] == gray {
+			cycle := []string{v}
+			for cycle[len(cycle)-1] != u {
+				cycle = append(cycle, parent[cycle[len(cycle)-1]])
+			}
+			return fmt.Errorf("possible rules cycle detected: %v", cycle)
 		}
-		orderFrom(u, graph, used, order)
 	}
+	color[v] = black
 	*order = append(*order, v)
+	return nil
 }
 
 func order(graph map[string][]string) ([]string, map[string]int, error) {
-	used := make(map[string]bool)
+	color := make(map[string]int)
+	parent := make(map[string]string)
 	order := make([]string, 0, len(graph))
 	for v := range graph {
-		if used[v] {
+		if color[v] == black {
 			continue
 		}
-		orderFrom(v, graph, used, &order)
+		err := orderFrom(v, graph, color, parent, &order)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 	for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
 		order[i], order[j] = order[j], order[i]
@@ -41,7 +61,7 @@ func order(graph map[string][]string) ([]string, map[string]int, error) {
 	for _, v := range order {
 		for _, next := range graph[v] {
 			if position[next] <= position[v] {
-				return nil, nil, fmt.Errorf("detect cycle: incorrect order between rules %v and %v", v, next)
+				return nil, nil, fmt.Errorf("cycle detected: incorrect order between rules %v and %v", v, next)
 			}
 		}
 	}
@@ -52,19 +72,22 @@ func (rs Rules) order() ([]string, map[string]int, error) {
 	if !rs.normalized() {
 		panic(fmt.Errorf("rules must be normalized"))
 	}
-	nonempty := rs.nonempty()
+	empty := rs.empty()
 	graph := make(map[string][]string)
+	for _, r := range rs {
+		graph[r.Name] = make([]string, 0)
+	}
 	for _, r := range rs {
 		switch peg := r.Expr.(type) {
 		case terminals:
 			continue
-		case nonterminal:
-			add(graph, r.Name, peg.NonTerminal)
+		case symbol:
+			add(graph, r.Name, peg.Symbol)
 		case junction:
 			for _, j := range peg.Exprs {
-				if nt, ok := j.(nonterminal); ok {
-					add(graph, r.Name, nt.NonTerminal)
-					if nonempty[nt.NonTerminal] {
+				if s, ok := j.(symbol); ok {
+					add(graph, r.Name, s.Symbol)
+					if !empty[s.Symbol] {
 						break
 					}
 				} else {
@@ -73,17 +96,17 @@ func (rs Rules) order() ([]string, map[string]int, error) {
 			}
 		case choice:
 			for _, c := range peg.Exprs {
-				if nt, ok := c.(nonterminal); ok {
-					add(graph, r.Name, nt.NonTerminal)
+				if s, ok := c.(symbol); ok {
+					add(graph, r.Name, s.Symbol)
 				}
 			}
 		case negation:
-			if nt, ok := peg.Expr.(nonterminal); ok {
-				add(graph, r.Name, nt.NonTerminal)
+			if s, ok := peg.Expr.(symbol); ok {
+				add(graph, r.Name, s.Symbol)
 			}
-		case repetition:
-			if nt, ok := peg.Expr.(nonterminal); ok {
-				add(graph, r.Name, nt.NonTerminal)
+		case kleene:
+			if s, ok := peg.Expr.(symbol); ok {
+				add(graph, r.Name, s.Symbol)
 			}
 		default:
 			panic(fmt.Errorf("unexpected peg expression type: %v", r.Expr))

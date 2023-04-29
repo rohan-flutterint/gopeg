@@ -1,0 +1,13 @@
+Text: (#Sequence EndOfLine)*
+EndOfLine: "\n" / !.
+#Sequence: (
+    =~"[\t\r ]+" /
+    =~"//[^\n]+" /
+    "/*" (!"*/" .)* "*/" /
+    "=~" Regex:String /
+    String:(=~"'(\\.|[^'\\\\])*'" / =~"\"(\\.|[^\\\"\\\\])*\"") /
+    Token:=~"[#a-zA-Z][0-9a-zA-Z_]*" /
+    Control:=~"[:/*+?{},!&]" /
+    Any:"." /
+    Open:"(" (#Sequence / "\n")* Close:")"
+)
