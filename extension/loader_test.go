@@ -1,4 +1,4 @@
-package format
+package extension
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ func TestTokenizer(t *testing.T) {
 	t.Logf("rules: %v", rules)
 }
 
-func TestGrammar(t *testing.T) {
+func TestGrammarLoad(t *testing.T) {
 	tokenizer, err := os.ReadFile("peg-grammar.peg")
 	assert.Nil(t, err)
 	rules, err := Load(string(tokenizer))

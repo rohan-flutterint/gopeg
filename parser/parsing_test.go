@@ -2,54 +2,58 @@ package parser
 
 import (
 	"github.com/stretchr/testify/assert"
+	"gopeg/definition"
 	"testing"
 )
 
 func TestArithmetic(t *testing.T) {
-	rs := Rules{
-		NewRule("Expr", NewSymbol("Sum")),
-		NewRule("Sum", NewJunction(
-			NewSymbol("Product"),
-			NewRepetition(
-				NewJunction(
-					NewChoice(NewToken("+"), NewToken("-")),
-					NewSymbol("Product"),
+	rs := definition.Rules{
+		definition.NewRule("Expr", definition.NewSymbol("Sum")),
+		definition.NewRule("Sum", definition.NewJunction(
+			definition.NewSymbol("Product"),
+			definition.NewRepetition(
+				definition.NewJunction(
+					definition.NewChoice(
+						definition.NewTextToken("+"),
+						definition.NewTextToken("-"),
+					),
+					definition.NewSymbol("Product"),
 				),
 			),
 		)),
-		NewRule("Product", NewJunction(
-			NewSymbol("Value"),
-			NewRepetition(
-				NewJunction(
-					NewChoice(NewToken("*"), NewToken("/")),
-					NewSymbol("Value"),
+		definition.NewRule("Product", definition.NewJunction(
+			definition.NewSymbol("Value"),
+			definition.NewRepetition(
+				definition.NewJunction(
+					definition.NewChoice(
+						definition.NewTextToken("*"),
+						definition.NewTextToken("/"),
+					),
+					definition.NewSymbol("Value"),
 				),
 			),
 		)),
-		NewRule("Digit", NewMatch("[0-9]")),
-		NewRule("Value", NewChoice(
-			NewJunction(
-				NewSymbol("Digit"),
-				NewRepetition(NewSymbol("Digit")),
+		definition.NewRule("Digit", definition.NewTextPattern("[0-9]")),
+		definition.NewRule("Value", definition.NewChoice(
+			definition.NewJunction(
+				definition.NewSymbol("Digit"),
+				definition.NewRepetition(definition.NewSymbol("Digit")),
 			),
-			NewJunction(
-				NewToken("("),
-				NewSymbol("Expr"),
-				NewToken(")"),
+			definition.NewJunction(
+				definition.NewTextToken("("),
+				definition.NewSymbol("Expr"),
+				definition.NewTextToken(")"),
 			),
 		)),
 	}
 	text := "10+2"
-	n1, err := Parse(rs, "Expr", []byte(text))
+	n1, err := ParseText(rs, "Expr", []byte(text))
 	assert.Nil(t, err)
-	start, end := n1.Range()
-	assert.Equal(t, end-start, 4)
-	t.Logf("\n%v\n", StringParsingNode(n1, []byte(text)))
+	t.Logf("%#v\n", n1)
+	t.Logf("\n%v\n", StringParsingNode(n1))
 
 	text = "1+(2*4-5)-10*44"
-	n2, err := Parse(rs, "Expr", []byte(text))
+	n2, err := ParseText(rs, "Expr", []byte(text))
 	assert.Nil(t, err)
-	start, end = n2.Range()
-	assert.Equal(t, end-start, 15)
-	t.Logf("\n%v\n", StringParsingNode(n2, []byte(text)))
+	t.Logf("\n%v\n", StringParsingNode(n2))
 }

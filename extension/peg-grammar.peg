@@ -5,8 +5,8 @@ Choice: Junction+
 Junction: (
     Alias:(Token {Control:":"})?
     Prefix:{Control:=~"[!&]"}?
-    Expression:({String} / {Token} / Map / {Open} Rule {Close})
+    Expression:({String} / {Token} / {Dot} / Map / {Open} Rule {Close})
     Suffix:{Control:=~"[*+?]"}?
 )
-Map: {Control:"{"} #KeyValue ({Control:","} #KeyValue)* {Control:"}"}
-#KeyValue: Key:({String} / {Token}) Value:({Control:":"} (String / Regex / Any))?
+Map: {Control:"{"} KeyValue ({Control:","} KeyValue)* {Control:"}"}
+KeyValue: Key:({String} / {Token}) Value:({Control:":"} ({String} / {Regex} / {Dot}))?

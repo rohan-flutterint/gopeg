@@ -2,6 +2,8 @@ package parser
 
 import (
 	"fmt"
+	"gopeg/analysis"
+	"gopeg/definition"
 )
 
 func add(graph map[string][]string, a, b string) {
@@ -11,21 +13,23 @@ func add(graph map[string][]string, a, b string) {
 	graph[a] = append(graph[a], b)
 }
 
+type visitState int
+
 const (
-	white = 0
-	gray  = 1
-	black = 2
+	notVisited     visitState = 0
+	visitedEntered visitState = 1
+	visitedExited  visitState = 2
 )
 
-func orderFrom(v string, graph map[string][]string, color map[string]int, parent map[string]string, order *[]string) error {
-	color[v] = gray
+func orderFrom(v string, graph map[string][]string, color map[string]visitState, parent map[string]string, order *[]string) error {
+	color[v] = visitedEntered
 	for _, u := range graph[v] {
-		if color[u] == white {
+		if color[u] == notVisited {
 			parent[u] = v
 			if err := orderFrom(u, graph, color, parent, order); err != nil {
 				return err
 			}
-		} else if color[u] == gray {
+		} else if color[u] == visitedEntered {
 			cycle := []string{v}
 			for cycle[len(cycle)-1] != u {
 				cycle = append(cycle, parent[cycle[len(cycle)-1]])
@@ -33,84 +37,88 @@ func orderFrom(v string, graph map[string][]string, color map[string]int, parent
 			return fmt.Errorf("possible rules cycle detected: %v", cycle)
 		}
 	}
-	color[v] = black
+	color[v] = visitedExited
 	*order = append(*order, v)
 	return nil
 }
 
-func order(graph map[string][]string) ([]string, map[string]int, error) {
-	color := make(map[string]int)
+func topoSort(graph map[string][]string) ([]string, map[string]int, error) {
+	color := make(map[string]visitState)
 	parent := make(map[string]string)
-	order := make([]string, 0, len(graph))
+	sequence := make([]string, 0, len(graph))
 	for v := range graph {
-		if color[v] == black {
+		if color[v] == visitedExited {
 			continue
 		}
-		err := orderFrom(v, graph, color, parent, &order)
+		err := orderFrom(v, graph, color, parent, &sequence)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
-		order[i], order[j] = order[j], order[i]
+	for i, j := 0, len(sequence)-1; i < j; i, j = i+1, j-1 {
+		sequence[i], sequence[j] = sequence[j], sequence[i]
 	}
 	position := make(map[string]int)
-	for i, v := range order {
+	for i, v := range sequence {
 		position[v] = i
 	}
-	for _, v := range order {
+	for _, v := range sequence {
 		for _, next := range graph[v] {
 			if position[next] <= position[v] {
 				return nil, nil, fmt.Errorf("cycle detected: incorrect order between rules %v and %v", v, next)
 			}
 		}
 	}
-	return order, position, nil
+	return sequence, position, nil
 }
 
-func (rs Rules) order() ([]string, map[string]int, error) {
-	if !rs.normalized() {
-		panic(fmt.Errorf("rules must be normalized"))
+func OrderRules(rules definition.Rules) ([]string, map[string]int, error) {
+	if _, err := analysis.CheckRulesConsistency(rules); err != nil {
+		panic(fmt.Errorf("rules must be consistent: %w", err))
 	}
-	empty := rs.empty()
-	graph := make(map[string][]string)
-	for _, r := range rs {
-		graph[r.Name] = make([]string, 0)
+	if err := analysis.CheckDesugaredRules(rules); err != nil {
+		panic(fmt.Errorf("rules must be desugared before ordering: %w", err))
 	}
-	for _, r := range rs {
-		switch peg := r.Expr.(type) {
-		case terminals:
-			continue
-		case symbol:
-			add(graph, r.Name, peg.Symbol)
-		case junction:
-			for _, j := range peg.Exprs {
-				if s, ok := j.(symbol); ok {
-					add(graph, r.Name, s.Symbol)
-					if !empty[s.Symbol] {
-						break
+	if err := analysis.CheckNormalizedRules(rules); err != nil {
+		panic(fmt.Errorf("rules must be normalized before ordering: %w", err))
+	}
+	emptiness := GetRulesEmptiness(rules)
+	ruleForwardDeps := buildForwardRuleDeps(rules)
+	ruleNonEmptyDeps := make(map[string][]string)
+	for _, rule := range rules {
+		switch peg := rule.Expr.(type) {
+		case definition.Junction:
+			edges := make([]string, 0)
+		depLoop:
+			for _, dep := range peg.Exprs {
+				switch pegDeg := dep.(type) {
+				case definition.Symbol:
+					edges = append(edges, pegDeg.Name)
+					if !emptiness[pegDeg.Name] {
+						break depLoop
 					}
-				} else {
-					break
+				case definition.Terminals:
+					if !isEmptyTerminal(pegDeg) {
+						break depLoop
+					}
+				default:
+					panic(fmt.Errorf("unexpected peg expression type: %v", pegDeg))
 				}
 			}
-		case choice:
-			for _, c := range peg.Exprs {
-				if s, ok := c.(symbol); ok {
-					add(graph, r.Name, s.Symbol)
-				}
-			}
-		case negation:
-			if s, ok := peg.Expr.(symbol); ok {
-				add(graph, r.Name, s.Symbol)
-			}
-		case kleene:
-			if s, ok := peg.Expr.(symbol); ok {
-				add(graph, r.Name, s.Symbol)
-			}
+			ruleNonEmptyDeps[rule.Name] = edges
+		case definition.Choice:
+			ruleNonEmptyDeps[rule.Name] = ruleForwardDeps[rule.Name]
+		case definition.Negation:
+			ruleNonEmptyDeps[rule.Name] = ruleForwardDeps[rule.Name]
+		case definition.Kleene:
+			ruleNonEmptyDeps[rule.Name] = ruleForwardDeps[rule.Name]
+		case definition.Symbol:
+			ruleNonEmptyDeps[rule.Name] = ruleForwardDeps[rule.Name]
+		case definition.Terminals:
+			ruleNonEmptyDeps[rule.Name] = ruleForwardDeps[rule.Name]
 		default:
-			panic(fmt.Errorf("unexpected peg expression type: %v", r.Expr))
+			panic(fmt.Errorf("unexpected peg expression type: %#v", rule.Expr))
 		}
 	}
-	return order(graph)
+	return topoSort(ruleNonEmptyDeps)
 }

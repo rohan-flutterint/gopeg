@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gopeg/format"
+	"gopeg/extension"
 	"gopeg/parser"
 	"os"
 )
@@ -12,7 +12,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tokenizerRules, err := format.Load(string(tokenizerFile))
+	tokenizerRules, err := extension.Load(string(tokenizerFile))
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	grammarRules, err := format.Load(string(grammarFile))
+	grammarRules, err := extension.Load(string(grammarFile))
 	if err != nil {
 		panic(err)
 	}

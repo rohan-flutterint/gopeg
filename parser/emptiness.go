@@ -1,52 +1,115 @@
 package parser
 
-func isEmpty(e Expr, rs map[string]Rule, n map[string]bool) bool {
-	switch peg := e.(type) {
-	case junction:
-		empty := true
-		for _, j := range peg.Exprs {
-			empty = empty && isEmpty(j, rs, n)
-		}
-		return empty
-	case choice:
-		empty := false
-		for _, c := range peg.Exprs {
-			empty = empty || isEmpty(c, rs, n)
-		}
-		return empty
-	case symbol:
-		return checkRule(rs[peg.Symbol], rs, n)
-	case dot:
+import (
+	"fmt"
+	"gopeg/analysis"
+	"gopeg/definition"
+)
+
+type emptinessState int
+
+const (
+	ruleIsUnknown  emptinessState = 0
+	ruleIsEmpty    emptinessState = 1
+	ruleIsNonEmpty emptinessState = 2
+)
+
+func isEmptyTerminal(expr definition.Terminals) bool {
+	switch peg := expr.(type) {
+	case definition.Dot:
 		return false
-	case byteSequence:
-		return len(peg.value) == 0
-	case attrSequenceMatcher:
-		return len(peg) == 0
-	default:
+	case definition.Empty:
 		return true
+	case definition.TextPattern:
+		return peg.Regex.Match([]byte{})
+	case definition.TextToken:
+		return len(peg.Text) == 0
+	case definition.AtomPattern:
+		return false
+	default:
+		panic(fmt.Errorf("unexpected peg terminal type: %#v", expr))
 	}
 }
 
-func checkRule(r Rule, rs map[string]Rule, empty map[string]bool) bool {
-	value, ok := empty[r.Name]
-	if ok {
-		return value
+func isEmptyExpr(expr definition.Expr, emptiness map[string]emptinessState) emptinessState {
+	switch peg := expr.(type) {
+	case definition.Junction:
+		for _, e := range peg.Exprs {
+			result := isEmptyExpr(e, emptiness)
+			if result == ruleIsNonEmpty {
+				return ruleIsNonEmpty
+			}
+			if result == ruleIsUnknown {
+				return ruleIsUnknown
+			}
+		}
+		return ruleIsEmpty
+	case definition.Choice:
+		for _, e := range peg.Exprs {
+			result := isEmptyExpr(e, emptiness)
+			if result == ruleIsEmpty {
+				return ruleIsEmpty
+			}
+			if result == ruleIsUnknown {
+				return ruleIsUnknown
+			}
+		}
+		return ruleIsNonEmpty
+	case definition.Kleene:
+		return ruleIsEmpty
+	case definition.Negation:
+		return ruleIsEmpty
+	case definition.Symbol:
+		return emptiness[peg.Name]
+	case definition.Terminals:
+		if isEmptyTerminal(peg) {
+			return ruleIsEmpty
+		}
+		return ruleIsNonEmpty
+	default:
+		panic(fmt.Errorf("unexpected peg expression type: %#v", expr))
 	}
-	empty[r.Name] = true
-	value = isEmpty(r.Expr, rs, empty)
-	empty[r.Name] = value
-	return value
 }
 
-func (rs Rules) empty() map[string]bool {
-	empty := make(map[string]bool)
-	m := make(map[string]Rule)
-	for _, r := range rs {
-		m[r.Name] = r
+func GetRulesEmptiness(rules definition.Rules) map[string]bool {
+	if _, err := analysis.CheckRulesConsistency(rules); err != nil {
+		panic(fmt.Errorf("rules must be consistent: %w", err))
 	}
-	for _, r := range rs {
-		checkRule(r, m, empty)
+	if err := analysis.CheckDesugaredRules(rules); err != nil {
+		panic(fmt.Errorf("rules must be desugared before checking for emptiness: %w", err))
 	}
-	//fmt.Printf("empty: %v\n", empty)
-	return empty
+	if err := analysis.CheckNormalizedRules(rules); err != nil {
+		panic(fmt.Errorf("rules must be normalized before checking for emptiness: %w", err))
+	}
+	ruleMap := buildRuleMap(rules)
+	ruleBackwardDeps := buildBackwardRuleDeps(rules)
+	ruleState := make(map[string]emptinessState)
+	queue := make([]string, 0)
+	for _, rule := range rules {
+		result := isEmptyExpr(rule.Expr, ruleState)
+		if result == ruleIsUnknown {
+			continue
+		}
+		ruleState[rule.Name] = result
+		queue = append(queue, rule.Name)
+	}
+	for i := 0; i < len(queue); i++ {
+		current := queue[i]
+		for _, dep := range ruleBackwardDeps[current] {
+			if _, ok := ruleState[dep]; ok {
+				continue
+			}
+			result := isEmptyExpr(ruleMap[dep].Expr, ruleState)
+			if result == ruleIsUnknown {
+				continue
+			}
+			ruleState[dep] = result
+			queue = append(queue, dep)
+		}
+	}
+	emptiness := make(map[string]bool)
+	for _, rule := range rules {
+		emptiness[rule.Name] = ruleState[rule.Name] == ruleIsEmpty
+	}
+	return emptiness
 }
