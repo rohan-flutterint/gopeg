@@ -1,4 +1,4 @@
-module gopeg
+module github.com/sivukhin/gopeg
 
 go 1.21
 
