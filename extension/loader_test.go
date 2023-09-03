@@ -24,6 +24,27 @@ func TestGrammarLoad(t *testing.T) {
 	t.Logf("rules: %v", rules)
 }
 
+func TestLoadAttributes(t *testing.T) {
+	rules, err := Load(`A: ("B" #B / "C" #C / "D" #D)*
+#B: {Ctx:"B"}:X
+#C: {Ctx:"C"}:X
+#D: {Ctx:"D"}:X:"."
+X: "."
+`)
+	require.Nil(t, err)
+	t.Log(rules)
+	{
+		node, err := parser.ParseText(rules, "A", []byte(`B.D.C.B.`))
+		require.Nil(t, err)
+		require.Equal(t, 8, node.Segment.Length())
+		require.Len(t, node.Children, 4)
+		require.Equal(t, "X", node.Children[0].Atom.Symbol)
+		require.Equal(t, "X", node.Children[1].Atom.Symbol)
+		require.Equal(t, map[string][]byte{"Ctx": []byte("B")}, node.Children[0].Atom.Attributes)
+		require.Equal(t, map[string][]byte{"Ctx": []byte("D")}, node.Children[1].Atom.Attributes)
+	}
+}
+
 func TestInlineRules(t *testing.T) {
 	rules, err := Load(`A: (Text:=~"[0-9]")+ / (Text:=~"[a-z]")+`)
 	require.Nil(t, err)

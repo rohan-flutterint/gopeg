@@ -71,10 +71,8 @@ func TestParentheses(t *testing.T) {
 
 func TestPegTokenizer(t *testing.T) {
 	text := `Text: (=~"[\n\t\r ]+" / "=~" Regex:String / String / =~"//[^\n]+" / Token / Control:.)*
-String: =~"'(\\.|[^']*)'" /*
-	this is multiline comment
-*/
-String: =~'"(\\.|[^\"]*)"' // single line comment
+String: =~"'(\\.|[^']*)'" 
+String: =~"(\\.|[^\"]*)" // single line comment
 Token: =~"[a-zA-Z][0-9a-zA-Z_]+"`
 	peg, err := parser.ParseText(PegTokenizerRules, PegText, []byte(text))
 	assert.Equal(t, len(text), peg.Segment.Length())
@@ -114,7 +112,7 @@ Token: =~"[a-zA-Z][0-9a-zA-Z_]+"`
 
 		{"Token": "String"},
 		{"Control": ":"},
-		{"Regex": `'"(\\.|[^\"]*)"'`},
+		{"Regex": `"(\\.|[^\"]*)"`},
 		{"EndOfLine": "\n"},
 
 		{"Token": "Token"},

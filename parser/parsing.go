@@ -119,7 +119,7 @@ func buildDerivationTree[T any](
 					break
 				}
 				if s, ok := peg.Expr.(definition.Symbol); ok {
-					next := NewParsingNode[T](s.Name, nil, data, definition.Segment{Start: p, End: p + step.advance})
+					next := NewParsingNode[T](s.Name, s.Attributes, data, definition.Segment{Start: p, End: p + step.advance})
 					current.Children = append(current.Children, &next)
 					derivation = append(derivation, &next)
 				}
@@ -130,7 +130,7 @@ func buildDerivationTree[T any](
 			for _, j := range peg.Exprs {
 				step := advance(p, j, position, table, data)
 				if s, ok := j.(definition.Symbol); ok {
-					next := NewParsingNode[T](s.Name, nil, data, definition.Segment{Start: p, End: p + step.advance})
+					next := NewParsingNode[T](s.Name, s.Attributes, data, definition.Segment{Start: p, End: p + step.advance})
 					current.Children = append(current.Children, &next)
 					derivation = append(derivation, &next)
 				}
@@ -143,7 +143,7 @@ func buildDerivationTree[T any](
 					continue
 				}
 				if s, ok := c.(definition.Symbol); ok {
-					next := NewParsingNode[T](s.Name, nil, data, definition.Segment{Start: current.Segment.Start, End: current.Segment.Start + step.advance})
+					next := NewParsingNode[T](s.Name, s.Attributes, data, definition.Segment{Start: current.Segment.Start, End: current.Segment.Start + step.advance})
 					current.Children = append(current.Children, &next)
 					derivation = append(derivation, &next)
 				}

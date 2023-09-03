@@ -20,11 +20,8 @@ func ConcatNodeTexts(nodes ...*ParsingNode) string {
 	return strings.Join(texts, "")
 }
 
-func (n *ParsingNode) Traverse(process func(node *ParsingNode, next func(nodes ...*ParsingNode))) {
-	process(n, func(nodes ...*ParsingNode) {
-		if len(nodes) == 0 {
-			nodes = n.Children
-		}
+func (n *ParsingNode) Traverse(process func(node *ParsingNode, next func(nodes []*ParsingNode))) {
+	process(n, func(nodes []*ParsingNode) {
 		for _, child := range nodes {
 			child.Traverse(process)
 		}

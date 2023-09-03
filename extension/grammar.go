@@ -11,9 +11,10 @@ const (
 	PegRule        = "Rule"
 	PegChoice      = "Choice"
 	PegJunction    = "Junction"
-	PegAlias       = "Alias"
 	PegPrefix      = "Prefix"
 	PegExpression  = "Expression"
+	PegSymbol      = "Symbol"
+	PegSymbolToken = "SymbolToken"
 	PegSuffix      = "Suffix"
 	PegMap         = "Map"
 	PegMapKeyValue = "MapKeyValue"
@@ -42,17 +43,19 @@ var (
 		)),
 		definition.NewRule(PegChoice, definition.NewRepetitionN(definition.NewSymbol(PegJunction), 1)),
 		definition.NewRule(PegJunction, definition.NewJunction(
-			definition.NewOptional(definition.NewJunction(definition.NewSymbol(PegAlias), definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewTokenAttributeMatcher(":")}))),
+			definition.NewOptional(definition.NewJunction(
+				definition.NewSymbol(PegSymbol),
+				definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewTokenAttributeMatcher(":")}),
+			)),
 			definition.NewOptional(definition.NewSymbol(PegPrefix)),
 			definition.NewSymbol(PegExpression),
 			definition.NewOptional(definition.NewSymbol(PegSuffix)),
 		)),
-		definition.NewRule(PegAlias, definition.NewAtomPattern(map[string]definition.TextTerminals{PegToken: nil})),
 		definition.NewRule(PegPrefix, definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewPatternAttributeMatcher("[!&]")})),
 		definition.NewRule(PegExpression, definition.NewChoice(
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegString: nil}),
-			definition.NewAtomPattern(map[string]definition.TextTerminals{PegToken: nil}),
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegRegex: nil}),
+			definition.NewSymbol(PegSymbol),
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegDot: nil}),
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegBuiltinSymbol: nil}),
 			definition.NewSymbol(PegMap),
@@ -63,6 +66,14 @@ var (
 			),
 		)),
 		definition.NewRule(PegSuffix, definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewPatternAttributeMatcher("[+*?]")})),
+		definition.NewRule(PegSymbol, definition.NewJunction(
+			definition.NewOptional(definition.NewJunction(
+				definition.NewSymbol(PegMap),
+				definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewTokenAttributeMatcher(":")}),
+			)),
+			definition.NewSymbol(PegSymbolToken),
+		)),
+		definition.NewRule(PegSymbolToken, definition.NewAtomPattern(map[string]definition.TextTerminals{PegToken: nil})),
 		definition.NewRule(PegMap, definition.NewJunction(
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegControl: definition.NewTokenAttributeMatcher("{")}),
 			definition.NewSymbol(PegMapKeyValue),

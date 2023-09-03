@@ -121,7 +121,20 @@ func (e Repetition) String() string {
 	}
 	return wrapExpr(e.exprPrecedence(), e.Expr) + suffix
 }
-func (e Symbol) String() string      { return e.Name }
+func (e Symbol) String() string {
+	attrs := make([]string, 0)
+	for key, value := range e.Attributes {
+		if value == nil {
+			attrs = append(attrs, key)
+		} else {
+			attrs = append(attrs, fmt.Sprintf(`%v:%v`, key, strconv.Quote(string(value))))
+		}
+	}
+	if len(attrs) > 0 {
+		return fmt.Sprintf("{%v}:%v", strings.Join(attrs, ", "), e.Name)
+	}
+	return e.Name
+}
 func (e Empty) String() string       { return "@empty" }
 func (e Dot) String() string         { return "." }
 func (e StartOfFile) String() string { return StartOfFileBuiltinSymbol }
@@ -210,7 +223,7 @@ func NewChoice(exprs ...Expr) Expr {
 func NewRepetition(expr Expr) Expr          { return Kleene{expr} }
 func NewRepetitionN(expr Expr, n uint) Expr { return Repetition{expr, n} }
 func NewNegation(expr Expr) Expr            { return Negation{expr} }
-func NewSymbol(s string, attrsOpt ...map[string][]byte) Expr {
+func NewSymbol(s string, attrsOpt ...map[string][]byte) Symbol {
 	var attrs map[string][]byte
 	if len(attrsOpt) > 0 {
 		attrs = attrsOpt[0]

@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func TestGrammar(t *testing.T) {
-	text := `Definitions: Definition*`
+func TestAttributes(t *testing.T) {
+	text := `B:"x" {X:"Y"}:C`
 	atoms := make([]definition.Atom, 0)
 	{
 		peg, err := parser.ParseText(PegTokenizerRules, PegText, []byte(text))

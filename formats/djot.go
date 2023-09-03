@@ -3,91 +3,123 @@ package formats
 import (
 	_ "embed"
 	"fmt"
+	"gopeg/definition"
 	"gopeg/extension"
 	"gopeg/parser"
+	"regexp"
 	"strings"
 )
 
 //go:embed djot.peg
 var djotPegGrammar string
 
-func Djot2Html(markdown string) (string, error) {
+var sectionIdIgnoreRegex = regexp.MustCompile(`[^\w\s]+`)
+var sectionIdReplaceRegex = regexp.MustCompile(`\s+`)
+
+func DjotSectionId(node *parser.ParsingNode) string {
+	var builder strings.Builder
+	node.Traverse(func(node *parser.ParsingNode, next func(nodes []*parser.ParsingNode)) {
+		if node.Atom.Symbol == "InlineText" && len(node.Children) == 0 {
+			builder.WriteString(node.Atom.SelectString())
+		} else {
+			next(node.Children)
+		}
+	})
+	id := builder.String()
+	id = sectionIdIgnoreRegex.ReplaceAllString(id, "")
+	id = sectionIdReplaceRegex.ReplaceAllString(id, "-")
+	return id
+}
+
+var djotRules definition.Rules
+
+func init() {
 	rules, err := extension.Load(djotPegGrammar)
 	if err != nil {
-		return "", err
+		panic(fmt.Errorf("unable to load djot grammar: %w", err))
 	}
-	node, err := parser.ParseText(rules, "Djot", []byte(markdown))
+	djotRules = rules
+}
+
+func Djot2Html(markdown string) (string, error) {
+	node, err := parser.ParseText(djotRules, "Djot", []byte(markdown))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to parse djot text: %w", err)
 	}
 	if node.Segment.Length() != len(markdown) {
 		return "", fmt.Errorf("unable to fully parse markdown (valid first %v bytes)", node.Segment.Length())
 	}
 	var html strings.Builder
 	footnotes := make(map[string]string)
-	node.Traverse(func(node *parser.ParsingNode, next func(nodes ...*parser.ParsingNode)) {
+	node.Traverse(func(node *parser.ParsingNode, next func(nodes []*parser.ParsingNode)) {
 		switch node.Atom.Symbol {
-		case "Reference":
+		case "FootnoteReference":
 			footnotes[node.MustSelectBySymbol("Name").Atom.SelectString()] = node.MustSelectBySymbol("Link").Atom.SelectString()
-		case "Link":
+		case "Link", "Reference":
 		default:
-			next()
+			next(node.Children)
 		}
 	})
-	node.Traverse(func(node *parser.ParsingNode, next func(nodes ...*parser.ParsingNode)) {
+	node.Traverse(func(node *parser.ParsingNode, next func(nodes []*parser.ParsingNode)) {
 		switch node.Atom.Symbol {
-		case "Heading":
-			level := len(node.MustSelectBySymbol("Level").Atom.SelectText())
-			html.WriteString(fmt.Sprintf("<h%v>", level))
-			next()
-			html.WriteString(fmt.Sprintf("</h%v>\n", level))
-		case "Paragraph":
-			if string(node.Atom.SelectText()) == "" {
-				html.WriteString("\n")
-				return
+		case "CodeBlock":
+			html.WriteString("<pre>")
+			if lang, ok := node.TrySelectBySymbol("Language"); ok {
+				html.WriteString(fmt.Sprintf("<code lang=\"%v\">", lang.Atom.SelectString()))
+			} else {
+				html.WriteString("<code>")
 			}
+			next(node.Children)
+			html.WriteString("</code></pre>\n")
+		case "SimpleHtml":
+			newline := ""
+			if _, ok := node.Atom.Attributes["Block"]; ok {
+				newline = "\n"
+			}
+			if len(node.Children) == 0 {
+				html.WriteString(fmt.Sprintf("<%v>%v", string(node.Atom.Attributes["Tag"]), newline))
+			} else {
+				html.WriteString(fmt.Sprintf("<%v>%v", string(node.Atom.Attributes["Tag"]), newline))
+				next(node.Children)
+				html.WriteString(fmt.Sprintf("</%v>%v", string(node.Atom.Attributes["Tag"]), newline))
+			}
+		case "Div":
+			html.WriteString(fmt.Sprintf("<div class=\"%v\">\n", node.MustSelectBySymbol("Class").Atom.SelectString()))
+			next(node.Children)
+			html.WriteString("</div>\n")
+		case "Heading":
+			headingId := strings.ReplaceAll(DjotSectionId(node.Children[1]), " ", "-")
+			level := len(node.MustSelectBySymbol("Level").Atom.SelectText())
+			html.WriteString(fmt.Sprintf("<section id=\"%v\">\n", headingId))
+			html.WriteString(fmt.Sprintf(`<h%v>`, level))
+			next(node.Children[1:2])
+			html.WriteString(fmt.Sprintf("</h%v>\n", level))
+			next(node.Children[2:])
+			html.WriteString("</section>\n")
+		case "Paragraph":
 			html.WriteString("<p>")
-			next()
+			next(node.Children)
 			html.WriteString("</p>\n")
-		case "EmphasisLight":
-			html.WriteString("<em>")
-			next()
-			html.WriteString("</em>")
-		case "EmphasisHeavy":
-			html.WriteString("<strong>")
-			next()
-			html.WriteString("</strong>")
-		case "Highlighted":
-			html.WriteString("<mark>")
-			next()
-			html.WriteString("</mark>")
-		case "Subscript":
-			html.WriteString("<sub>")
-			next()
-			html.WriteString("</sub>")
-		case "Superscript":
-			html.WriteString("<sup>")
-			next()
-			html.WriteString("</sup>")
-		case "Insert":
-			html.WriteString("<ins>")
-			next()
-			html.WriteString("</ins>")
-		case "Delete":
-			html.WriteString("<del>")
-			next()
-			html.WriteString("</del>")
 		case "Verbatim":
-			html.WriteString("<code>")
 			code := parser.ConcatNodeTexts(node.Children...)
 			if strings.HasPrefix(code, " `") && strings.HasSuffix(code, "` ") {
 				code = code[1 : len(code)-1]
 			}
+			html.WriteString(fmt.Sprintf("<%v", string(node.Atom.Attributes["Tag"])))
+			if class, ok := node.Atom.Attributes["Class"]; ok {
+				classString := string(class)
+				html.WriteString(fmt.Sprintf(" class=\"%v\"", classString))
+				if classString == "math inline" {
+					code = "\\(" + code + "\\)"
+				} else if classString == "math display" {
+					code = "\\[" + code + "\\]"
+				}
+			}
+			html.WriteString(">")
 			html.WriteString(code)
-			html.WriteString("</code>")
+			html.WriteString(fmt.Sprintf("</%v>", string(node.Atom.Attributes["Tag"])))
 		case "Link", "AutoLink":
-			isImageNode, hasIsImageNode := node.TrySelectBySymbol("IsImage")
-			isImage := hasIsImageNode && isImageNode.Atom.SelectString() == "!"
+			_, isImage := node.Atom.Attributes["Image"]
 			textNode, hasTextNode := node.TrySelectBySymbol("Text")
 			var text string
 			if hasTextNode {
@@ -120,20 +152,26 @@ func Djot2Html(markdown string) (string, error) {
 					html.WriteString(fmt.Sprintf(`<a>%v</a>`, text))
 				}
 			}
-		case "Pre":
-			html.WriteString(fmt.Sprintf("<pre class=\"%v\">%v</pre>\n",
-				node.MustSelectBySymbol("Info").Atom.SelectString(),
-				node.MustSelectBySymbol("Text").Atom.SelectString(),
-			))
 		case "InlineText":
 			if len(node.Children) > 0 {
-				next()
+				next(node.Children)
 			} else {
 				html.WriteString(string(node.Atom.SelectText()))
 			}
-		case "Reference":
+		case "LineBreak":
+			html.WriteString("<br>\n")
+		case "Symbol":
+			value := node.Atom.SelectString()
+			if value == "+1" {
+				html.WriteString("👍")
+			} else if value == "smiley" {
+				html.WriteString("😃")
+			} else {
+				html.WriteString(":" + value + ":")
+			}
+		case "FootnoteReference":
 		default:
-			next()
+			next(node.Children)
 		}
 	})
 	return html.String(), nil

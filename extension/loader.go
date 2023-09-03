@@ -72,22 +72,28 @@ func rule(node *parser.ParsingNode, atoms []definition.Atom) (definition.Expr, [
 					}
 					rules = append(rules, addition...)
 				case PegMap:
+					pegMap, err := createPegMap(child, atoms)
+					if err != nil {
+						return nil, nil, err
+					}
 					matcher := make(map[string]definition.TextTerminals)
-					for _, keyValue := range child.EnsureOnlySymbol(PegMapKeyValue) {
-						key := keyValue.MustSelectBySymbol(PegMapKey)
-						value, valueOk := keyValue.TrySelectBySymbol(PegMapValue)
-						if !valueOk {
-							matcher[string(key.Atom.SelectText())] = nil
-						} else {
-							atom := atoms[value.Segment.Start]
-							expr, err := atom2expr(atom, true)
-							if err != nil {
-								return nil, nil, err
-							}
-							matcher[string(key.Atom.SelectText())] = expr.(definition.TextTerminals)
+					for pegMapKey, pegMapValue := range pegMap {
+						if pegMapValue == nil {
+							matcher[pegMapKey] = nil
+							continue
 						}
+						atomExpr, err := atom2expr(*pegMapValue, true)
+						if err != nil {
+							return nil, nil, err
+						}
+						matcher[pegMapKey] = atomExpr.(definition.TextTerminals)
 					}
 					current = definition.NewAtomPattern(matcher)
+				case PegSymbol:
+					current, err = createPegSymbol(child, atoms)
+					if err != nil {
+						return nil, nil, err
+					}
 				default:
 					panic(fmt.Errorf("unexpected atom symbol: %v", child.Atom.Symbol))
 				}
@@ -117,16 +123,65 @@ func rule(node *parser.ParsingNode, atoms []definition.Atom) (definition.Expr, [
 					return nil, nil, fmt.Errorf("unknown suffix: %v", control)
 				}
 			}
-			if alias, ok := junction.TrySelectBySymbol(PegAlias); ok {
-				symbol := fmt.Sprintf("%v@%v", string(alias.Atom.SelectText()), alias.Segment.Start)
-				rules = append(rules, definition.NewRule(symbol, current))
-				current = definition.NewSymbol(symbol)
+			if alias, ok := junction.TrySelectBySymbol(PegSymbol); ok {
+				symbol, err := createPegSymbol(alias, atoms)
+				if err != nil {
+					return nil, nil, fmt.Errorf("unable to create alias: %w", err)
+				}
+				inlineSymbol := symbol
+				inlineSymbol.Name = fmt.Sprintf("%v@%v", symbol.Name, alias.Segment.Start)
+				rules = append(rules, definition.NewRule(inlineSymbol.Name, current))
+				current = inlineSymbol
 			}
 			junctions = append(junctions, current)
 		}
 		choices = append(choices, definition.NewJunction(junctions...))
 	}
 	return definition.NewChoice(choices...), rules, nil
+}
+
+func createPegSymbol(node *parser.ParsingNode, atoms []definition.Atom) (definition.Symbol, error) {
+	atom := atoms[node.MustSelectBySymbol(PegSymbolToken).Segment.Start]
+	if atom.Symbol != PegToken {
+		return definition.Symbol{}, fmt.Errorf("unexpected usage of PegSymbol %v != %v", atom.Symbol, PegToken)
+	}
+	var attrs map[string][]byte
+	if pegMapNode, ok := node.TrySelectBySymbol(PegMap); ok {
+		pegMap, err := createPegMap(pegMapNode, atoms)
+		if err != nil {
+			return definition.Symbol{}, fmt.Errorf("unable to create PegMap: %w", err)
+		}
+		attrs = make(map[string][]byte)
+		for pegMapKey, pegMapValue := range pegMap {
+			if pegMapValue == nil {
+				attrs[pegMapKey] = nil
+			} else if pegMapValue.Symbol == PegString {
+				value, err := strconv.Unquote(pegMapValue.SelectString())
+				if err != nil {
+					return definition.Symbol{}, fmt.Errorf("unable to unquote PegMap value for key %v: %w", pegMapKey, err)
+				}
+				attrs[pegMapKey] = []byte(value)
+			} else {
+				return definition.Symbol{}, fmt.Errorf("unexpected value atom for PegMap: %v", pegMapValue.Symbol)
+			}
+		}
+	}
+	return definition.NewSymbol(atom.SelectString(), attrs), nil
+}
+
+func createPegMap(child *parser.ParsingNode, atoms []definition.Atom) (map[string]*definition.Atom, error) {
+	attributes := make(map[string]*definition.Atom)
+	for _, keyValue := range child.EnsureOnlySymbol(PegMapKeyValue) {
+		key := keyValue.MustSelectBySymbol(PegMapKey)
+		value, valueOk := keyValue.TrySelectBySymbol(PegMapValue)
+		if !valueOk {
+			attributes[key.Atom.SelectString()] = nil
+		} else {
+			atom := atoms[value.Segment.Start]
+			attributes[key.Atom.SelectString()] = &atom
+		}
+	}
+	return attributes, nil
 }
 
 func atom2expr(atom definition.Atom, textMatcher bool) (definition.Expr, error) {

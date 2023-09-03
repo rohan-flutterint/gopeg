@@ -1,30 +1,51 @@
-Djot: (Reference / Paragraph)*
-
+Djot: (
+    FootnoteReference /
+    FootnoteComment /
+    Heading /
+    {Tag:"blockquote", Block}:SimpleHtml:#BlockQuote /
+    {Tag:"hr", Block}:SimpleHtml:#ThematicBreak /
+    Div /
+    CodeBlock /
+    Paragraph
+)*
 Paragraph: (!#BlankLine #InlineText)* #BlankLine
+FootnoteReference: "[" !"^" Name:(!"]" .)+ "]:" #Spaces* Link:(!#LineEnding .)+ #LineEnding
+FootnoteComment: "[^" Name:(!"]" .)+ "]:" #Spaces* Link:(!#LineEnding .)+ #LineEnding
+Heading: Level:=~"#+" Header:(!#BlankLine "#"* " "* (!#LineEnding #InlineText)* InlineText:(!#BlankLine #LineEnding)?)* #BlankLine Paragraph*
+#BlockQuote: &">" Paragraph:(!#BlankLine ">"? " "* (!#LineEnding #InlineText)* InlineText:(!#BlankLine #LineEnding)?)* #BlankLine
+#ThematicBreak: (#Spaces* "*" #Spaces*) (#Spaces* "*" #Spaces*) (#Spaces* "*" #Spaces*)+ #LineEnding+
+Div: "::: " Class:=~"\\w+" #LineEnding (Paragraph:(!(#LineEnding ":::") !#BlankLine #InlineText)* #BlankLine?)* #LineEnding ":::"
+CodeBlock: (
+    #Backtick1 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick1 (!"`" . / "`"+))+ (#Backtick1 "`"* / @eof) /
+    #Backtick2 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick2 (!"`" . / "`"+))+ (#Backtick2 "`"* / @eof) /
+    #Backtick3 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick3 (!"`" . / "`"+))+ (#Backtick3 "`"* / @eof) /
+    #Backtick4 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick4 (!"`" . / "`"+))+ (#Backtick4 "`"* / @eof) /
+    #Backtick5 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick5 (!"`" . / "`"+))+ (#Backtick5 "`"* / @eof) /
+    #Backtick6 #Spaces* (Language:=~"\\w+")? #Spaces* #LineEnding InlineText:(!#Backtick6 (!"`" . / "`"+))+ (#Backtick6 "`"* / @eof)
+)
 
-#Spaces: =~"[ \t]"
-#LineEnding: "\n" / "\r" !"\n" / "\r" "\n" / @eof
-#BlankLine: (#LineEnding #Spaces* #LineEnding) / @eof
 
-#Control: =~"[_*`#[\\]()>\r\n{}=~^+-]"
+#Symbol: ":" Symbol:=~"[^:]+" ":"
 #InlineText: !#BlankLine (
-    Insert / Delete /
-    Subscript / Superscript /
-    EmphasisHeavy / EmphasisLight /
-    Highlighted /
-    Link /
-    AutoLink /
-    Verbatim /
+    #Insert / #Delete /
+    #Subscript / #Superscript /
+    #EmphasisHeavy / #EmphasisLight /
+    #Highlighted /
+    #Link / #Image / AutoLink /
+    #DisplayMath / #InlineMath / #Verbatim /
+    #Symbol /
+    LineBreak:"\\\n" /
     InlineText:(!#Control .)+ /
     InlineText:#Control
 )
 
-Link: IsImage:"!"? "[" (!"]" Text:(InlineText:=~"[^\n\r\\]]+" / #LineEnding) )* "]" (
+#Link: !"!" Link
+#Image: "!" {Image}:Link
+Link: "[" (!"]" Text:(InlineText:=~"[^\n\r\\]]+" / #LineEnding) )* "]" (
     "(" Url:(!")" (InlineText:=~"[^\n\r)]+" / #LineEnding) )* ")" /
     "[" Reference:(InlineText:=~"[^\\]]"*) "]"
 )
 AutoLink: "<" Url:(InlineText:(!">" .)*) ">"
-Reference: "[" Name:(!"]" .)+ "]:" #Spaces* Link:(!#LineEnding .)+ #LineEnding
 
 #Backtick1: "`" !"`"
 #Backtick2: "``" !"`"
@@ -32,6 +53,11 @@ Reference: "[" Name:(!"]" .)+ "]:" #Spaces* Link:(!#LineEnding .)+ #LineEnding
 #Backtick4: "````" !"`"
 #Backtick5: "`````" !"`"
 #Backtick6: "``````" !"`"
+
+#Verbatim: {Tag:"code"}:Verbatim
+#InlineMath: "$" {Tag:"span", Class:"math inline"}:Verbatim
+#DisplayMath: "$$" {Tag:"span", Class:"math display"}:Verbatim
+
 Verbatim: (
     #Backtick1 InlineText:(!#Backtick1 (!"`" . / "`"+))+ (#Backtick1 / @eof) /
     #Backtick2 InlineText:(!#Backtick2 (!"`" . / "`"+))+ (#Backtick2 / @eof) /
@@ -41,10 +67,16 @@ Verbatim: (
     #Backtick6 InlineText:(!#Backtick6 (!"`" . / "`"+))+ (#Backtick6 / @eof)
 )
 
-EmphasisLight: ("{_" / "_" !" ") ((!"_" / &EmphasisLight) #InlineText)+ ("_}" / "_")
-EmphasisHeavy: ("{*" / "*" !" ") ((!"*" / &EmphasisHeavy) #InlineText)+ ("*}" / "*")
-Highlighted: "{=" (!"=}" #InlineText)+ "=}"
-Subscript: ("{~" / "~") (!"~" #InlineText)+ ("~}" / "~")
-Superscript: ("{^" / "^") (!"^" #InlineText)+ ("^}" / "^")
-Insert: "{+" (!"+}" #InlineText)+ "+}"
-Delete: "{-" (!"-}" #InlineText)+ "-}"
+#EmphasisLight: ("{_" / "_" !" ")     {Tag:"em"}:SimpleHtml:((!"_" / &#EmphasisLight) #InlineText)+ ("_}" / "_")
+#EmphasisHeavy: ("{*" / "*" !" ") {Tag:"strong"}:SimpleHtml:((!"*" / &#EmphasisHeavy) #InlineText)+ ("*}" / "*")
+
+#Highlighted: "{="          {Tag:"mark"}:SimpleHtml:(!"=}" #InlineText)+ "=}"
+#Subscript:   ("{~" / "~")   {Tag:"sub"}:SimpleHtml:(!"~" #InlineText)+  ("~}" / "~")
+#Superscript: ("{^" / "^")   {Tag:"sup"}:SimpleHtml:(!"^" #InlineText)+  ("^}" / "^")
+#Insert:      "{+"           {Tag:"ins"}:SimpleHtml:(!"+}" #InlineText)+ "+}"
+#Delete:      "{-"           {Tag:"del"}:SimpleHtml:(!"-}" #InlineText)+ "-}"
+
+#Control: =~"[_*`#[\\]()>\r\n{}=~^+$\\\\:-]"
+#Spaces: =~"[ \t]"
+#LineEnding: "\n" / "\r" !"\n" / "\r" "\n" / @eof
+#BlankLine: (#LineEnding #Spaces* #LineEnding) / @eof

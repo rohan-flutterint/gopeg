@@ -100,6 +100,76 @@ func TestDjot(t *testing.T) {
 			Djot:    "My boss is {-mean-}{+nice+}.",
 			Html:    "<p>My boss is <del>mean</del><ins>nice</ins>.</p>\n",
 		},
+		{
+			Section: "Math",
+			Djot:    "Einstein derived $`e=mc^2`.\nPythagoras proved\n$$` x^n + y^n = z^n `",
+			Html:    "<p>Einstein derived <span class=\"math inline\">\\(e=mc^2\\)</span>.\nPythagoras proved\n<span class=\"math display\">\\[ x^n + y^n = z^n \\]</span></p>\n",
+		},
+		{
+			Section: "LineBreak",
+			Djot:    "This is a soft\nbreak and this is a hard\\\nbreak.",
+			Html:    "<p>This is a soft\nbreak and this is a hard<br>\nbreak.</p>\n",
+		},
+		{
+			Section: "LineBreak",
+			Djot:    "My reaction is :+1: :smiley:.",
+			Html:    "<p>My reaction is 👍 😃.</p>\n",
+		},
+		{
+			Section: "Heading",
+			Djot:    "## A level _two_ heading!",
+			Html:    "<section id=\"A-level-two-heading\">\n<h2>A level <em>two</em> heading!</h2>\n</section>\n",
+		},
+		{
+			Section: "Heading",
+			Djot:    "# A heading that\n# takes up\n# three lines\n\nA paragraph, finally",
+			Html:    "<section id=\"A-heading-that-takes-up-three-lines\">\n<h1>A heading that\ntakes up\nthree lines</h1>\n<p>A paragraph, finally</p>\n</section>\n",
+		},
+		{
+			Section: "Heading",
+			Djot:    "# A heading that\ntakes up\nthree lines\n\nA paragraph, finally.",
+			Html:    "<section id=\"A-heading-that-takes-up-three-lines\">\n<h1>A heading that\ntakes up\nthree lines</h1>\n<p>A paragraph, finally.</p>\n</section>\n",
+		},
+		//{
+		//	Section: "BlockQuote",
+		//	Djot:    "> This is a block quote.\n>\n> 1. with a\n> 2. list in it.",
+		//	Html:    "<blockquote>\n<p>This is a block quote.</p>\n<ol>\n<li>\nwith a\n</li>\n<li>\nlist in it.\n</li>\n</ol>\n</blockquote>\n",
+		//},
+		{
+			Section: "BlockQuote",
+			Djot:    "> This is a block\nquote.",
+			Html:    "<blockquote>\n<p>This is a block\nquote.</p>\n</blockquote>\n",
+		},
+		{
+			Section: "BlockQuote",
+			Djot:    "> This is a block\n> quote.",
+			Html:    "<blockquote>\n<p>This is a block\nquote.</p>\n</blockquote>\n",
+		},
+		{
+			Section: "CodeBlock",
+			Djot:    "````\nThis is how you do a code block:\n\n``` ruby\nx = 5 * 6\n```\n````",
+			Html:    "<pre><code>This is how you do a code block:\n\n``` ruby\nx = 5 * 6\n```\n</code></pre>\n",
+		},
+		{
+			Section: "CodeBlock",
+			Djot:    "``` ruby\nx = 5 * 6\n```",
+			Html:    "<pre><code lang=\"ruby\">x = 5 * 6\n</code></pre>\n",
+		},
+		{
+			Section: "BlockQuote",
+			Djot:    "> This is a block\n> quote.",
+			Html:    "<blockquote>\n<p>This is a block\nquote.</p>\n</blockquote>\n",
+		},
+		{
+			Section: "ThematicBreak",
+			Djot:    "Then they went to sleep.\n\n      * * * *\n\nWhen they woke up",
+			Html:    "<p>Then they went to sleep.</p>\n<hr>\n<p>When they woke up</p>\n",
+		},
+		{
+			Section: "Div",
+			Djot:    "::: warning\nHere is a paragraph.\n\nAnd here is another.\n:::",
+			Html:    "<div class=\"warning\">\n<p>Here is a paragraph.</p>\n<p>And here is another.</p>\n</div>\n",
+		},
 	} {
 		t.Run(tt.Section+"("+tt.Djot+")", func(t *testing.T) {
 			html, err := Djot2Html(tt.Djot)
