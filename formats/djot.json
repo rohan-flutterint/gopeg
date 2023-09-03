@@ -1,0 +1,74 @@
+[
+  {
+    "markdown": "*foo bar*\n",
+    "html": "<p><em>foo bar</em></p>\n",
+    "example": 1,
+    "section": "Emphasis and strong emphasis"
+  },
+  {
+    "markdown": "_foo bar_\n",
+    "html": "<p><em>foo bar</em></p>\n",
+    "example": 2,
+    "section": "Emphasis and strong emphasis"
+  },
+  {
+    "markdown": "__foo bar__\n",
+    "html": "<p><strong>foo bar</strong></p>\n",
+    "example": 3,
+    "section": "Emphasis and strong emphasis"
+  },
+  {
+    "markdown": "_foo **bar** baz_\n",
+    "html": "<p><em>foo <strong>bar</strong> baz</em></p>\n",
+    "example": 4,
+    "section": "Emphasis and strong emphasis"
+  },
+  {
+    "markdown": "# foo\n## foo\n### foo\n#### foo\n##### foo\n###### foo\n",
+    "html": "<h1>foo</h1>\n<h2>foo</h2>\n<h3>foo</h3>\n<h4>foo</h4>\n<h5>foo</h5>\n<h6>foo</h6>\n",
+    "example": 1,
+    "section": "Headings"
+  },
+  {
+    "markdown": "# foo *bar*",
+    "html": "<h1>foo <em>bar</em></h1>\n",
+    "example": 2,
+    "section": "Headings"
+  },
+  {
+    "markdown": "[link](/uri)\n",
+    "html": "<p><a href=\"/uri\">link</a></p>\n",
+    "example": 1,
+    "section": "Links"
+  },
+  {
+    "markdown": "[](./target.md)\n",
+    "html": "<p><a href=\"./target.md\"></a></p>\n",
+    "example": 2,
+    "section": "Links"
+  },
+  {
+    "markdown": "[link]()\n",
+    "html": "<p><a href=\"\">link</a></p>\n",
+    "example": 3,
+    "section": "Links"
+  },
+  {
+    "markdown": "```ruby\ndef foo(x)\n  return 3\nend\n```\n",
+    "html": "<pre class=\"ruby\">def foo(x)\n  return 3\nend\n</pre>\n",
+    "example": 1,
+    "section": "Fenced code blocks"
+  },
+  {
+    "markdown": "```\n[link](no) **no**\n```\n",
+    "html": "<pre class=\"\">[link](no) **no**\n</pre>\n",
+    "example": 2,
+    "section": "Fenced code blocks"
+  },
+  {
+    "markdown": "> # Foo\n> bar\n> baz\n",
+    "html": "<blockquote>\n<h1>Foo</h1>\n<p>bar\nbaz</p>\n</blockquote>\n",
+    "example": 1,
+    "section": "Block quotes"
+  }
+]

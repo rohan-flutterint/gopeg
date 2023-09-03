@@ -56,6 +56,10 @@ type (
 	EndOfFile   struct{}
 )
 
+func (a Atom) SelectString() string {
+	return string(a.SelectText())
+}
+
 func (a Atom) SelectText() []byte {
 	if len(a.TextSelector.segments) == 0 {
 		return nil

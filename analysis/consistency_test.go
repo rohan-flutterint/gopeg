@@ -17,7 +17,7 @@ func TestConsistency(t *testing.T) {
 	})
 	t.Run("only atoms", func(t *testing.T) {
 		terminalType, err := CheckRulesConsistency(definition.Rules{
-			definition.NewRule("A", definition.NewAtomPattern(map[string]definition.AttributeMatcher{})),
+			definition.NewRule("A", definition.NewAtomPattern(map[string]definition.TextTerminals{})),
 		})
 		require.Nil(t, err)
 		require.Equal(t, AtomTerminalType, terminalType)
@@ -33,7 +33,7 @@ func TestConsistency(t *testing.T) {
 		_, err := CheckRulesConsistency(definition.Rules{
 			definition.NewRule("B", definition.NewJunction(
 				definition.NewTextToken("hello"),
-				definition.NewAtomPattern(map[string]definition.AttributeMatcher{"A": definition.NewTokenAttributeMatcher("test")}),
+				definition.NewAtomPattern(map[string]definition.TextTerminals{"A": definition.NewTokenAttributeMatcher("test")}),
 			)),
 		})
 		require.NotNil(t, err)
@@ -41,7 +41,7 @@ func TestConsistency(t *testing.T) {
 	})
 	t.Run("inconsistent rules", func(t *testing.T) {
 		_, err := CheckRulesConsistency(definition.Rules{
-			definition.NewRule("A", definition.NewAtomPattern(map[string]definition.AttributeMatcher{})),
+			definition.NewRule("A", definition.NewAtomPattern(map[string]definition.TextTerminals{})),
 			definition.NewRule("A", definition.NewTextToken("hello")),
 		})
 		require.NotNil(t, err)

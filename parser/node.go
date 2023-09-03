@@ -12,9 +12,20 @@ type ParsingNode struct {
 	Children []*ParsingNode
 }
 
-func (n *ParsingNode) Traverse(process func(node *ParsingNode, next func())) {
-	process(n, func() {
-		for _, child := range n.Children {
+func ConcatNodeTexts(nodes ...*ParsingNode) string {
+	texts := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		texts = append(texts, node.Atom.SelectString())
+	}
+	return strings.Join(texts, "")
+}
+
+func (n *ParsingNode) Traverse(process func(node *ParsingNode, next func(nodes ...*ParsingNode))) {
+	process(n, func(nodes ...*ParsingNode) {
+		if len(nodes) == 0 {
+			nodes = n.Children
+		}
+		for _, child := range nodes {
 			child.Traverse(process)
 		}
 	})

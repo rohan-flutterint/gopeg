@@ -118,7 +118,7 @@ func rule(node *parser.ParsingNode, atoms []definition.Atom) (definition.Expr, [
 				}
 			}
 			if alias, ok := junction.TrySelectBySymbol(PegAlias); ok {
-				symbol := string(alias.Atom.SelectText())
+				symbol := fmt.Sprintf("%v@%v", string(alias.Atom.SelectText()), alias.Segment.Start)
 				rules = append(rules, definition.NewRule(symbol, current))
 				current = definition.NewSymbol(symbol)
 			}

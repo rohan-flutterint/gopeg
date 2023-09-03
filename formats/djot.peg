@@ -1,0 +1,50 @@
+Djot: (Reference / Paragraph)*
+
+Paragraph: (!#BlankLine #InlineText)* #BlankLine
+
+#Spaces: =~"[ \t]"
+#LineEnding: "\n" / "\r" !"\n" / "\r" "\n" / @eof
+#BlankLine: (#LineEnding #Spaces* #LineEnding) / @eof
+
+#Control: =~"[_*`#[\\]()>\r\n{}=~^+-]"
+#InlineText: !#BlankLine (
+    Insert / Delete /
+    Subscript / Superscript /
+    EmphasisHeavy / EmphasisLight /
+    Highlighted /
+    Link /
+    AutoLink /
+    Verbatim /
+    InlineText:(!#Control .)+ /
+    InlineText:#Control
+)
+
+Link: IsImage:"!"? "[" (!"]" Text:(InlineText:=~"[^\n\r\\]]+" / #LineEnding) )* "]" (
+    "(" Url:(!")" (InlineText:=~"[^\n\r)]+" / #LineEnding) )* ")" /
+    "[" Reference:(InlineText:=~"[^\\]]"*) "]"
+)
+AutoLink: "<" Url:(InlineText:(!">" .)*) ">"
+Reference: "[" Name:(!"]" .)+ "]:" #Spaces* Link:(!#LineEnding .)+ #LineEnding
+
+#Backtick1: "`" !"`"
+#Backtick2: "``" !"`"
+#Backtick3: "```" !"`"
+#Backtick4: "````" !"`"
+#Backtick5: "`````" !"`"
+#Backtick6: "``````" !"`"
+Verbatim: (
+    #Backtick1 InlineText:(!#Backtick1 (!"`" . / "`"+))+ (#Backtick1 / @eof) /
+    #Backtick2 InlineText:(!#Backtick2 (!"`" . / "`"+))+ (#Backtick2 / @eof) /
+    #Backtick3 InlineText:(!#Backtick3 (!"`" . / "`"+))+ (#Backtick3 / @eof) /
+    #Backtick4 InlineText:(!#Backtick4 (!"`" . / "`"+))+ (#Backtick4 / @eof) /
+    #Backtick5 InlineText:(!#Backtick5 (!"`" . / "`"+))+ (#Backtick5 / @eof) /
+    #Backtick6 InlineText:(!#Backtick6 (!"`" . / "`"+))+ (#Backtick6 / @eof)
+)
+
+EmphasisLight: ("{_" / "_" !" ") ((!"_" / &EmphasisLight) #InlineText)+ ("_}" / "_")
+EmphasisHeavy: ("{*" / "*" !" ") ((!"*" / &EmphasisHeavy) #InlineText)+ ("*}" / "*")
+Highlighted: "{=" (!"=}" #InlineText)+ "=}"
+Subscript: ("{~" / "~") (!"~" #InlineText)+ ("~}" / "~")
+Superscript: ("{^" / "^") (!"^" #InlineText)+ ("^}" / "^")
+Insert: "{+" (!"+}" #InlineText)+ "+}"
+Delete: "{-" (!"-}" #InlineText)+ "-}"

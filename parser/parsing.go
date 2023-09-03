@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gopeg/analysis"
 	"gopeg/definition"
-	"strings"
 )
 
 type step struct {
@@ -210,9 +209,11 @@ func buildStepTable[T any](ruleMap map[string]definition.Rule, order []string, p
 }
 
 func transform(mapping map[string]string, node *ParsingNode) []*ParsingNode {
-	if name, ok := mapping[node.Atom.Symbol]; !strings.HasPrefix(name, "#") && ok {
+	name, ok := mapping[node.Atom.Symbol]
+	symbol, hidden := definition.AnalyzeSymbolName(name)
+	if ok && !hidden {
 		atom := node.Atom
-		atom.Symbol = name
+		atom.Symbol = symbol
 		next := ParsingNode{
 			Atom:     atom,
 			Segment:  node.Segment,
