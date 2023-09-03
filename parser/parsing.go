@@ -3,8 +3,8 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"gopeg/analysis"
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/analysis"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 type step struct {

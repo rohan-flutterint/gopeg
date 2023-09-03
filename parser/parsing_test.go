@@ -1,9 +1,9 @@
 package parser
 
 import (
+	"github.com/sivukhin/gopeg/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopeg/definition"
 	"testing"
 )
 

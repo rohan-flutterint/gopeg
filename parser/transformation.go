@@ -2,7 +2,7 @@ package parser
 
 //
 //import (
-//	"gopeg/definition"
+//	"github.com/sivukhin/gopeg/definition"
 //	"strings"
 //)
 //

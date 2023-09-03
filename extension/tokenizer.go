@@ -1,7 +1,7 @@
 package extension
 
 import (
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 const (

@@ -1,8 +1,8 @@
 package extension
 
 import (
+	"github.com/sivukhin/gopeg/parser"
 	"github.com/stretchr/testify/assert"
-	"gopeg/parser"
 	"testing"
 )
 

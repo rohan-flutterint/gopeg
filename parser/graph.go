@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 func addBackwardDeps(deps map[string][]string, root string, exprs []definition.Expr) {

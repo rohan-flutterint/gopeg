@@ -2,7 +2,7 @@ package analysis
 
 import (
 	"github.com/stretchr/testify/require"
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/definition"
 	"testing"
 )
 

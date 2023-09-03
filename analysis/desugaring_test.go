@@ -1,8 +1,8 @@
 package analysis
 
 import (
+	"github.com/sivukhin/gopeg/definition"
 	"github.com/stretchr/testify/assert"
-	"gopeg/definition"
 	"testing"
 )
 

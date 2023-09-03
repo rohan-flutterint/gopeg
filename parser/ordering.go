@@ -2,8 +2,8 @@ package parser
 
 import (
 	"fmt"
-	"gopeg/analysis"
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/analysis"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 func add(graph map[string][]string, a, b string) {

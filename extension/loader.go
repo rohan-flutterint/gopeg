@@ -2,8 +2,8 @@ package extension
 
 import (
 	"fmt"
-	"gopeg/definition"
-	"gopeg/parser"
+	"github.com/sivukhin/gopeg/definition"
+	"github.com/sivukhin/gopeg/parser"
 	"strconv"
 )
 

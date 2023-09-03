@@ -3,7 +3,7 @@ package extension
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopeg/parser"
+	"github.com/sivukhin/gopeg/parser"
 	"os"
 	"testing"
 )

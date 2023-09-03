@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"gopeg/extension"
-	"gopeg/parser"
+	"github.com/sivukhin/gopeg/extension"
+	"github.com/sivukhin/gopeg/parser"
 	"os"
 )
 

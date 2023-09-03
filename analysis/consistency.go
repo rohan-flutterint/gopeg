@@ -2,7 +2,7 @@ package analysis
 
 import (
 	"fmt"
-	"gopeg/definition"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 type TerminalType int

@@ -3,9 +3,9 @@ package formats
 import (
 	_ "embed"
 	"fmt"
-	"gopeg/definition"
-	"gopeg/extension"
-	"gopeg/parser"
+	"github.com/sivukhin/gopeg/definition"
+	"github.com/sivukhin/gopeg/extension"
+	"github.com/sivukhin/gopeg/parser"
 	"regexp"
 	"strings"
 )

@@ -3,8 +3,8 @@ package parser
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopeg/definition"
-	"gopeg/analysis"
+	"github.com/sivukhin/gopeg/definition"
+	"github.com/sivukhin/gopeg/analysis"
 	"testing"
 )
 
