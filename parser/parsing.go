@@ -107,7 +107,7 @@ func buildDerivationTree[T any](
 		case definition.Negation:
 			continue
 		case definition.Symbol:
-			next := NewParsingNode[T](peg.Name, nil, data, current.Segment)
+			next := NewParsingNode[T](peg.Name, peg.Attributes, data, current.Segment)
 			current.Children = append(current.Children, &next)
 			derivation = append(derivation, &next)
 			continue

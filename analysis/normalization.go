@@ -33,7 +33,7 @@ func normalizeExpr(generator *nameGenerator, expr definition.Expr) (definition.E
 	case definition.Terminals:
 		return peg, nil
 	case definition.Symbol:
-		return definition.Symbol{Name: generator.createRootName(peg.Name)}, nil
+		return definition.Symbol{Name: generator.createRootName(peg.Name), Attributes: peg.Attributes}, nil
 	case definition.Kleene:
 		normalized, rules := prepareExpr(generator, peg.Expr)
 		return definition.Kleene{Expr: normalized}, rules

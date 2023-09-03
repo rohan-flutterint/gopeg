@@ -2,9 +2,30 @@ package parser
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopeg/definition"
 	"testing"
 )
+
+func TestAttributes(t *testing.T) {
+	rs := definition.Rules{
+		definition.NewRule("A", definition.NewRepetition(definition.NewChoice(
+			definition.NewJunction(definition.NewTextToken("B"), definition.NewSymbol("#B")),
+			definition.NewJunction(definition.NewTextToken("C"), definition.NewSymbol("#C")),
+		))),
+		definition.NewRule("#B", definition.NewSymbol("D", map[string][]byte{"Ctx": []byte("B")})),
+		definition.NewRule("#C", definition.NewSymbol("D", map[string][]byte{"Ctx": []byte("C")})),
+		definition.NewRule("D", definition.NewTextToken(".")),
+	}
+	text := "B.B.C.B."
+	node, err := ParseText(rs, "A", []byte(text))
+	require.Nil(t, err)
+	require.Len(t, node.Children, 4)
+	require.Equal(t, []byte("B"), node.Children[0].Atom.Attributes["Ctx"])
+	require.Equal(t, []byte("B"), node.Children[1].Atom.Attributes["Ctx"])
+	require.Equal(t, []byte("C"), node.Children[2].Atom.Attributes["Ctx"])
+	require.Equal(t, []byte("B"), node.Children[3].Atom.Attributes["Ctx"])
+}
 
 func TestArithmetic(t *testing.T) {
 	rs := definition.Rules{

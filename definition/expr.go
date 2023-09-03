@@ -43,7 +43,10 @@ type (
 		Expr Expr
 		Min  uint
 	}
-	Symbol      struct{ Name string }
+	Symbol struct {
+		Name       string
+		Attributes map[string][]byte
+	}
 	Empty       struct{}
 	Dot         struct{}
 	TextToken   struct{ Text []byte }
@@ -207,10 +210,16 @@ func NewChoice(exprs ...Expr) Expr {
 func NewRepetition(expr Expr) Expr          { return Kleene{expr} }
 func NewRepetitionN(expr Expr, n uint) Expr { return Repetition{expr, n} }
 func NewNegation(expr Expr) Expr            { return Negation{expr} }
-func NewSymbol(s string) Expr               { return Symbol{s} }
-func NewOptional(expr Expr) Expr            { return Optional{expr} }
-func NewEnsure(expr Expr) Expr              { return Ensure{expr} }
-func NewTextToken(token string) Expr        { return TextToken{Text: []byte(token)} }
+func NewSymbol(s string, attrsOpt ...map[string][]byte) Expr {
+	var attrs map[string][]byte
+	if len(attrsOpt) > 0 {
+		attrs = attrsOpt[0]
+	}
+	return Symbol{Name: s, Attributes: attrs}
+}
+func NewOptional(expr Expr) Expr     { return Optional{expr} }
+func NewEnsure(expr Expr) Expr       { return Ensure{expr} }
+func NewTextToken(token string) Expr { return TextToken{Text: []byte(token)} }
 func NewTextPattern(regex string) Expr {
 	regex = "^" + strings.TrimPrefix(regex, "^")
 	return TextPattern{Expr: regex, Regex: regexp.MustCompile(regex)}
