@@ -25,13 +25,6 @@ type (
 		Terminals
 		Match([]byte) (int, bool)
 	}
-	TokenAttributeMatcher struct {
-		Token []byte
-	}
-	PatternAttributeMatcher struct {
-		Expr  string
-		Regex *regexp.Regexp
-	}
 
 	Atom struct {
 		Symbol       string
@@ -59,6 +52,8 @@ type (
 		Expr  string
 		Regex *regexp.Regexp
 	}
+	StartOfFile struct{}
+	EndOfFile   struct{}
 )
 
 func (a Atom) SelectText() []byte {
@@ -97,6 +92,11 @@ func wrapExpr(rootPrecedence int, item Expr) string {
 	return item.String()
 }
 
+const (
+	StartOfFileBuiltinSymbol = "@sof"
+	EndOfFileBuiltinSymbol   = "@eof"
+)
+
 func (e Choice) String() string   { return joinExprs(e.exprPrecedence(), e.Exprs, " / ") }
 func (e Junction) String() string { return joinExprs(e.exprPrecedence(), e.Exprs, " ") }
 func (e Negation) String() string { return "!" + wrapExpr(e.exprPrecedence(), e.Expr) }
@@ -117,6 +117,8 @@ func (e Repetition) String() string {
 func (e Symbol) String() string      { return e.Name }
 func (e Empty) String() string       { return "@empty" }
 func (e Dot) String() string         { return "." }
+func (e StartOfFile) String() string { return StartOfFileBuiltinSymbol }
+func (e EndOfFile) String() string   { return EndOfFileBuiltinSymbol }
 func (e TextPattern) String() string { return "=~" + strconv.Quote(e.Expr) }
 func (e TextToken) String() string   { return strconv.Quote(string(e.Text)) }
 func (e AtomPattern) String() string {
@@ -131,9 +133,6 @@ func (e AtomPattern) String() string {
 	return fmt.Sprintf("{%v}", strings.Join(attributes, ", "))
 }
 
-func (m TokenAttributeMatcher) String() string   { return strconv.Quote(string(m.Token)) }
-func (m PatternAttributeMatcher) String() string { return "=~" + strconv.Quote(m.Expr) }
-
 func (e Choice) exprPrecedence() int      { return 1 }
 func (e Junction) exprPrecedence() int    { return 2 }
 func (e Negation) exprPrecedence() int    { return 3 }
@@ -147,6 +146,8 @@ func (e Dot) exprPrecedence() int         { return 5 }
 func (e TextToken) exprPrecedence() int   { return 5 }
 func (e TextPattern) exprPrecedence() int { return 5 }
 func (e AtomPattern) exprPrecedence() int { return 5 }
+func (e StartOfFile) exprPrecedence() int { return 5 }
+func (e EndOfFile) exprPrecedence() int   { return 5 }
 
 func (e Choice) Children() []Expr      { return e.Exprs }
 func (e Junction) Children() []Expr    { return e.Exprs }
@@ -161,6 +162,8 @@ func (e Dot) Children() []Expr         { return nil }
 func (e TextToken) Children() []Expr   { return nil }
 func (e TextPattern) Children() []Expr { return nil }
 func (e AtomPattern) Children() []Expr { return nil }
+func (e StartOfFile) Children() []Expr { return nil }
+func (e EndOfFile) Children() []Expr   { return nil }
 
 func (e Choice) exprCore()      {}
 func (e Junction) exprCore()    {}
@@ -172,12 +175,16 @@ func (e Dot) exprCore()         {}
 func (e TextToken) exprCore()   {}
 func (e TextPattern) exprCore() {}
 func (e AtomPattern) exprCore() {}
+func (e StartOfFile) exprCore() {}
+func (e EndOfFile) exprCore()   {}
 
 func (e Empty) isTerminal()       {}
 func (e Dot) isTerminal()         {}
 func (e TextToken) isTerminal()   {}
 func (e TextPattern) isTerminal() {}
 func (e AtomPattern) isTerminal() {}
+func (e StartOfFile) isTerminal() {}
+func (e EndOfFile) isTerminal()   {}
 
 func NewEmpty() Expr { return Empty{} }
 func NewDot() Expr   { return Dot{} }

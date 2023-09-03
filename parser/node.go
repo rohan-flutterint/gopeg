@@ -12,6 +12,14 @@ type ParsingNode struct {
 	Children []*ParsingNode
 }
 
+func (n *ParsingNode) Traverse(process func(node *ParsingNode, next func())) {
+	process(n, func() {
+		for _, child := range n.Children {
+			child.Traverse(process)
+		}
+	})
+}
+
 func (n *ParsingNode) FilterBySymbol(symbol string) []*ParsingNode {
 	filtered := make([]*ParsingNode, 0)
 	for _, child := range n.Children {

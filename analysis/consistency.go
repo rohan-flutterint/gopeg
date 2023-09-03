@@ -59,6 +59,10 @@ func CheckExprConsistency(expr definition.Expr) (TerminalType, error) {
 		return ByteTerminalType, nil
 	case definition.AtomPattern:
 		return AtomTerminalType, nil
+	case definition.StartOfFile:
+		return AnyTerminalType, nil
+	case definition.EndOfFile:
+		return AnyTerminalType, nil
 	default:
 		panic(fmt.Errorf("unexpected peg expression type: %v", expr))
 	}

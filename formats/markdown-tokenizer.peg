@@ -1,0 +1,14 @@
+Markdown: (Heading / Paragraph)*
+
+Heading: =~" {1,3}"? Level:=~"#{1,6}" #Spaces+ HeadingText:(!#HeadingTrailer .)* #HeadingTrailer
+Paragraph: InlineText #BlankLine
+
+#Spaces: =~"[ \t]"
+#LineEnding: "\n" / "\r" !"\n" / "\r" "\n" / @eof
+#HeadingTrailer: (#Spaces* / #Spaces+ =~"#+" #Spaces*) #LineEnding
+#BlankLine: (#LineEnding #Spaces* #LineEnding) / @eof
+
+InlineText: (!#BlankLine #InlinePart)*
+#InlinePart: Emphasis2 / Emphasis1 / .
+Emphasis2:       =~"\\*{2,}" (!"*" #InlinePart)+ =~"\\*{2,}" / =~"_{2,}" (!"_" InlineText+) =~"_{2,}"
+Emphasis1:       =~"\\*{1,}" (!"*" #InlinePart)+ =~"\\*{1,}" / =~"_{1,}" (!"_" InlineText+) =~"_{1,}"

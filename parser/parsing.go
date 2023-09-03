@@ -74,7 +74,7 @@ func ParseText(rules definition.Rules, root string, text []byte) (*ParsingNode, 
 func advance[T any](i int, expr definition.Expr, position map[string]int, table [][]step, data []T) step {
 	switch peg := expr.(type) {
 	case definition.Terminals:
-		advance, ok := definition.Accept[T](peg, data[i:])
+		advance, ok := definition.Accept[T](peg, data, i)
 		return step{ok: ok, advance: advance}
 	case definition.Symbol:
 		return table[i][position[peg.Name]]

@@ -54,6 +54,7 @@ var (
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegToken: nil}),
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegRegex: nil}),
 			definition.NewAtomPattern(map[string]definition.TextTerminals{PegDot: nil}),
+			definition.NewAtomPattern(map[string]definition.TextTerminals{PegBuiltinSymbol: nil}),
 			definition.NewSymbol(PegMap),
 			definition.NewJunction(
 				definition.NewAtomPattern(map[string]definition.TextTerminals{PegOpen: nil}),

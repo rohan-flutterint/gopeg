@@ -26,6 +26,10 @@ func isEmptyTerminal(expr definition.Terminals) bool {
 		return len(peg.Text) == 0
 	case definition.AtomPattern:
 		return false
+	case definition.StartOfFile:
+		return true
+	case definition.EndOfFile:
+		return true
 	default:
 		panic(fmt.Errorf("unexpected peg terminal type: %#v", expr))
 	}

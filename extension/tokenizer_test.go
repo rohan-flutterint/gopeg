@@ -6,10 +6,29 @@ import (
 	"testing"
 )
 
+func TestControls(t *testing.T) {
+	text := `Text: @sof "a" @eof`
+	peg, err := parser.ParseText(PegTokenizerRules, PegText, []byte(text))
+	assert.Equal(t, len(text), peg.Segment.Length())
+	assert.Nil(t, err)
+	attrs := make([]map[string]string, 0)
+	for _, children := range peg.Children {
+		attrs = append(attrs, map[string]string{children.Atom.Symbol: string(children.Atom.SelectText())})
+	}
+	assert.Equal(t, attrs, []map[string]string{
+		{"Token": "Text"},
+		{"Control": ":"},
+		{"BuiltinSymbol": "@sof"},
+		{"String": `"a"`},
+		{"BuiltinSymbol": "@eof"},
+		{"EndOfLine": ``},
+	})
+}
+
 func TestEscaping(t *testing.T) {
 	text := `Text: "\"\'\\\\\\"`
 	peg, err := parser.ParseText(PegTokenizerRules, PegText, []byte(text))
-	assert.Equal(t, len(text), peg.Segment.Length)
+	assert.Equal(t, len(text), peg.Segment.Length())
 	assert.Nil(t, err)
 	attrs := make([]map[string]string, 0)
 	for _, children := range peg.Children {
@@ -83,7 +102,7 @@ Token: =~"[a-zA-Z][0-9a-zA-Z_]+"`
 		{"Control": "/"},
 		{"Token": "Control"},
 		{"Control": ":"},
-		{"Any": "."},
+		{"Dot": "."},
 		{"Close": ")"},
 		{"Control": "*"},
 		{"EndOfLine": "\n"},

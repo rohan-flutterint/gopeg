@@ -152,6 +152,16 @@ func atom2expr(atom definition.Atom, textMatcher bool) (definition.Expr, error) 
 		return definition.NewPatternAttributeMatcher(unescaped), nil
 	case PegDot:
 		return definition.NewDot(), nil
+	case PegBuiltinSymbol:
+		symbol := string(atom.SelectText())
+		switch symbol {
+		case definition.StartOfFileBuiltinSymbol:
+			return definition.StartOfFile{}, nil
+		case definition.EndOfFileBuiltinSymbol:
+			return definition.EndOfFile{}, nil
+		default:
+			panic(fmt.Errorf("unexpected builtin symbol: %v", symbol))
+		}
 	}
 	return nil, fmt.Errorf("can't convert atom to expression: %v", atom.Symbol)
 }

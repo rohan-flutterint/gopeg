@@ -5,16 +5,17 @@ import (
 )
 
 const (
-	PegText      = "Text"
-	PegSequence  = "#Sequence"
-	PegString    = "String"
-	PegRegex     = "Regex"
-	PegToken     = "Token"
-	PegControl   = "Control"
-	PegDot       = "Dot"
-	PegEndOfLine = "EndOfLine"
-	PegOpen      = "Open"
-	PegClose     = "Close"
+	PegText          = "Text"
+	PegSequence      = "#Sequence"
+	PegString        = "String"
+	PegRegex         = "Regex"
+	PegToken         = "Token"
+	PegControl       = "Control"
+	PegDot           = "Dot"
+	PegEndOfLine     = "EndOfLine"
+	PegOpen          = "Open"
+	PegClose         = "Close"
+	PegBuiltinSymbol = "BuiltinSymbol"
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 			definition.NewSymbol(PegString),
 			definition.NewSymbol(PegToken),
 			definition.NewSymbol(PegControl),
+			definition.NewSymbol(PegBuiltinSymbol),
 			definition.NewSymbol(PegDot),
 			definition.NewJunction(
 				definition.NewSymbol(PegOpen),
@@ -50,11 +52,15 @@ var (
 		), 1)),
 		definition.NewRule(PegRegex, definition.NewSymbol(PegString)),
 		definition.NewRule(PegString, definition.NewChoice(
-			definition.NewTextPattern(`'(\\.|[^'\\])*'`),
 			definition.NewTextPattern(`"(\\.|[^"\\])*"`),
+			definition.NewTextPattern("`[^`]*`"),
 		)),
 		definition.NewRule(PegToken, definition.NewTextPattern("[#a-zA-Z][0-9a-zA-Z_]*")),
 		definition.NewRule(PegControl, definition.NewTextPattern("[:/*+?{},!&]")),
+		definition.NewRule(PegBuiltinSymbol, definition.NewChoice(
+			definition.NewTextToken("@sof"),
+			definition.NewTextToken("@eof"),
+		)),
 		definition.NewRule(PegEndOfLine, definition.NewChoice(
 			definition.NewTextToken("\n"),
 			definition.NewNegation(definition.NewDot())),
