@@ -6,11 +6,23 @@ import (
 	"strings"
 
 	"github.com/sivukhin/gopeg/definition"
+	"github.com/sivukhin/gopeg/extension"
 	"github.com/sivukhin/gopeg/parser"
 )
 
-//go:embed python-tokenizer.peg
-var PythonTokenizer string
+var (
+	//go:embed python-tokenizer.peg
+	PythonTokenizer      string
+	PythonTokenizerRules definition.Rules
+)
+
+func init() {
+	var err error
+	PythonTokenizerRules, err = extension.Load(PythonTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load PythonTokenizer rules: %w", err))
+	}
+}
 
 func Highlight(text string, tokenRules definition.Rules) (string, error) {
 	tokens, err := parser.ParseText(tokenRules, tokenRules[0].Name, []byte(text))
