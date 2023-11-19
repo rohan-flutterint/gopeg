@@ -1,11 +1,13 @@
 package parser
 
 import (
-	"github.com/sivukhin/gopeg/analysis"
-	"github.com/sivukhin/gopeg/definition"
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sivukhin/gopeg/analysis"
+	"github.com/sivukhin/gopeg/definition"
 )
 
 func TestOrdering(t *testing.T) {
@@ -70,6 +72,16 @@ func TestCycle(t *testing.T) {
 	rs := definition.Rules{
 		definition.NewRule("A", definition.NewJunction(definition.NewSymbol("B"), definition.NewSymbol("A"))),
 		definition.NewRule("B", definition.NewTextToken("hello")),
+	}
+	_, _, err := OrderRules(rs)
+	assert.Nil(t, err)
+}
+
+func TestTrickyCycle(t *testing.T) {
+	rs := definition.Rules{
+		definition.NewRule("A", definition.NewChoice(definition.NewSymbol("B"), definition.NewTextToken("x"))),
+		definition.NewRule("B", definition.NewChoice(definition.NewSymbol("C"), definition.NewTextToken("y"))),
+		definition.NewRule("C", definition.NewChoice(definition.NewSymbol("A"), definition.NewTextToken("z"))),
 	}
 	_, _, err := OrderRules(rs)
 	assert.Nil(t, err)
