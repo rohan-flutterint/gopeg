@@ -14,6 +14,9 @@ var (
 	//go:embed python-tokenizer.peg
 	PythonTokenizer      string
 	PythonTokenizerRules definition.Rules
+	//go:embed c-tokenizer.peg
+	CTokenizer      string
+	CTokenizerRules definition.Rules
 )
 
 func init() {
@@ -21,6 +24,10 @@ func init() {
 	PythonTokenizerRules, err = extension.Load(PythonTokenizer)
 	if err != nil {
 		panic(fmt.Errorf("unable to load PythonTokenizer rules: %w", err))
+	}
+	CTokenizerRules, err = extension.Load(CTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load CTokenizer rules: %w", err))
 	}
 }
 

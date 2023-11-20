@@ -16,3 +16,13 @@ func TestPython(t *testing.T) {
     <span class="identifier">result</span> = <span class="identifier">value</span>**2 <span class="comment"># dummy comment</span>
     <span class="keyword">return</span> <span class="identifier">result</span>`, highlighted)
 }
+
+func TestC(t *testing.T) {
+	highlighted, err := Highlight(`typedef struct {
+    unsigned value;       /**comment */
+} parameters;`, CTokenizerRules)
+	require.Nil(t, err)
+	require.Equal(t, `<span class="keyword">typedef</span> <span class="keyword">struct</span> {
+    <span class="keyword">unsigned</span> <span class="identifier">value</span>;       <span class="comment">/**comment */</span>
+} <span class="identifier">parameters</span>;`, highlighted)
+}
