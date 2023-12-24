@@ -1,7 +1,8 @@
 Source: #Sequence*
 #Sequence: (
     {tag:"span", class:"string"}:Token:(=~"'(\\.|[^'\\\\])*'" / =~"\"(\\.|[^\\\"\\\\])*\"") /
-    {tag:"span", class:"keyword"}:Token:#Keywords /
+    {tag:"span", class:"macro"}:Token:("#" #Identifier) /
+    {tag:"span", class:"keyword"}:Token:(#Keywords !=~"[a-zA-Z0-9_]+") /
     {tag:"span", class:"function"}:Token:(#Identifier &"(") /
     {tag:"span", class:"identifier"}:Token:#Identifier /
     {tag:"span", class:"number"}:Token:#Number /

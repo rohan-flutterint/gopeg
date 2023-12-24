@@ -1,0 +1,71 @@
+Source: #Sequence*
+#Sequence: (
+    {tag:"span", class:"string"}:Token:(=~"'(\\.|[^'\\\\])*'" / =~"\"(\\.|[^\\\"\\\\])*\"") /
+    {tag:"span", class:"keyword"}:Token:(#Keywords !=~"[a-zA-Z0-9_]+") /
+    {tag:"span", class:"function"}:Token:(#Identifier &"(") /
+    {tag:"span", class:"identifier"}:Token:#Identifier /
+    {tag:"span", class:"number"}:Token:#Number /
+    {tag:"span", class:"comment"}:Token:#Comment /
+    None:.
+)
+
+#EndOfLine: "\n" / !.
+#Comment: "/*" (!"*/" .)* "*/" / "//" (!#EndOfLine .)* &#EndOfLine
+#Identifier: =~"[a-zA-Z][a-zA-Z0-9_]*"
+#Number: =~"(\\+|-)?\\d+(.\\d*)?"
+
+// https://doc.rust-lang.org/book/appendix-01-keywords.html
+#Keywords: (
+    "as" /
+    "async" /
+    "await" /
+    "break" /
+    "const" /
+    "continue" /
+    "crate" /
+    "dyn" /
+    "else" /
+    "enum" /
+    "extern" /
+    "false" /
+    "fn" /
+    "for" /
+    "if" /
+    "impl" /
+    "in" /
+    "let" /
+    "loop" /
+    "match" /
+    "mod" /
+    "move" /
+    "mut" /
+    "pub" /
+    "ref" /
+    "return" /
+    "Self" /
+    "self" /
+    "static" /
+    "struct" /
+    "super" /
+    "trait" /
+    "true" /
+    "type" /
+    "union" /
+    "unsafe" /
+    "use" /
+    "where" /
+    "while" /
+    "abstract" /
+    "become" /
+    "box" /
+    "do" /
+    "final" /
+    "macro" /
+    "override" /
+    "priv" /
+    "try" /
+    "typeof" /
+    "unsized" /
+    "virtual" /
+    "yield"
+)

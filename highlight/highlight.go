@@ -17,6 +17,15 @@ var (
 	//go:embed c-tokenizer.peg
 	CTokenizer      string
 	CTokenizerRules definition.Rules
+	//go:embed rust-tokenizer.peg
+	RustTokenizer      string
+	RustTokenizerRules definition.Rules
+	//go:embed shell-tokenizer.peg
+	ShellTokenizer      string
+	ShellTokenizerRules definition.Rules
+	//go:embed go-tokenizer.peg
+	GoTokenizer      string
+	GoTokenizerRules definition.Rules
 )
 
 func init() {
@@ -28,6 +37,18 @@ func init() {
 	CTokenizerRules, err = extension.Load(CTokenizer)
 	if err != nil {
 		panic(fmt.Errorf("unable to load CTokenizer rules: %w", err))
+	}
+	RustTokenizerRules, err = extension.Load(RustTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load RustTokenizer rules: %w", err))
+	}
+	ShellTokenizerRules, err = extension.Load(ShellTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load ShellTokenizer rules: %w", err))
+	}
+	GoTokenizerRules, err = extension.Load(GoTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load GoTokenizer rules: %w", err))
 	}
 }
 

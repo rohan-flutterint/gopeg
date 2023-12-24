@@ -1,0 +1,7 @@
+Source: #Sequence*
+#Sequence: (
+    {tag:"span", class:"command"}:Token:("$> " (. !#EndOfLine)* . &#EndOfLine) /
+    None:.
+)
+
+#EndOfLine: "\n" / !.

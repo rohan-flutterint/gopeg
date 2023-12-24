@@ -1,0 +1,44 @@
+Source: #Sequence*
+#Sequence: (
+    {tag:"span", class:"string"}:Token:(=~"'(\\.|[^'\\\\])*'" / =~"\"(\\.|[^\\\"\\\\])*\"") /
+    {tag:"span", class:"keyword"}:Token:(#Keywords !=~"[a-zA-Z0-9_]+") /
+    {tag:"span", class:"function"}:Token:(#Identifier &"(") /
+    {tag:"span", class:"identifier"}:Token:#Identifier /
+    {tag:"span", class:"number"}:Token:#Number /
+    {tag:"span", class:"comment"}:Token:#Comment /
+    None:.
+)
+
+#EndOfLine: "\n" / !.
+#Comment: "/*" (!"*/" .)* "*/" / "//" (!#EndOfLine .)* &#EndOfLine
+#Identifier: =~"[a-zA-Z][a-zA-Z0-9_]*"
+#Number: =~"(\\+|-)?\\d+(.\\d*)?"
+
+// https://en.cppreference.com/w/cpp/keyword
+#Keywords: (
+    "break" /
+    "default" /
+    "func" /
+    "interface" /
+    "select" /
+    "case" /
+    "defer" /
+    "go" /
+    "map" /
+    "struct" /
+    "chan" /
+    "else" /
+    "goto" /
+    "package" /
+    "switch" /
+    "const" /
+    "fallthrough" /
+    "if" /
+    "range" /
+    "type" /
+    "continue" /
+    "for" /
+    "import" /
+    "return" /
+    "var"
+)
