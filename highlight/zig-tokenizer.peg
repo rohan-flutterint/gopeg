@@ -1,0 +1,65 @@
+Source: #Sequence*
+#Sequence: (
+    {tag:"span", class:"string"}:Token:(=~"'(\\.|[^'\\\\])*'" / =~"\"(\\.|[^\\\"\\\\])*\"") /
+    {tag:"span", class:"keyword"}:Token:(#Keywords !=~"[a-zA-Z0-9_]+") /
+    {tag:"span", class:"function"}:Token:(#Identifier &"(") /
+    {tag:"span", class:"identifier"}:Token:#Identifier /
+    {tag:"span", class:"number"}:Token:#Number /
+    {tag:"span", class:"comment"}:Token:#Comment /
+    None:.
+)
+
+#EndOfLine: "\n" / !.
+#Comment: "/*" (!"*/" .)* "*/" / "//" (!#EndOfLine .)* &#EndOfLine
+#Identifier: =~"[a-zA-Z][a-zA-Z0-9_]*"
+#Number: =~"(\\+|-)?\\d+(.\\d*)?"
+
+// https://ziglang.org/documentation/0.11.0/#toc-Keyword-Reference
+#Keywords: (
+    "addrspace" /
+    "align" /
+    "allowzero" /
+    "and" /
+    "anyframe" /
+    "anytype" /
+    "asm" /
+    "async" /
+    "await" /
+    "break" /
+    "catch" /
+    "comptime" /
+    "const" /
+    "continue" /
+    "defer" /
+    "else" /
+    "enum" /
+    "errdefer" /
+    "error" /
+    "export" /
+    "extern" /
+    "fn" /
+    "for" /
+    "if" /
+    "inline" /
+    "linksection" /
+    "noalias" /
+    "noinline" /
+    "nosuspend" /
+    "orelse" /
+    "packed" /
+    "pub" /
+    "resume" /
+    "return" /
+    "struct" /
+    "suspend" /
+    "switch" /
+    "test" /
+    "threadlocal" /
+    "try" /
+    "union" /
+    "unreachable" /
+    "usingnamespace" /
+    "var" /
+    "volatile" /
+    "while"
+)

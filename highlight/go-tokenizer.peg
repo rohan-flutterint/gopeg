@@ -14,7 +14,7 @@ Source: #Sequence*
 #Identifier: =~"[a-zA-Z][a-zA-Z0-9_]*"
 #Number: =~"(\\+|-)?\\d+(.\\d*)?"
 
-// https://en.cppreference.com/w/cpp/keyword
+// https://go.dev/ref/spec#Keywords
 #Keywords: (
     "break" /
     "default" /

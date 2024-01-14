@@ -26,6 +26,12 @@ var (
 	//go:embed go-tokenizer.peg
 	GoTokenizer      string
 	GoTokenizerRules definition.Rules
+	//go:embed zig-tokenizer.peg
+	ZigTokenizer      string
+	ZigTokenizerRules definition.Rules
+	//go:embed asm-tokenizer.peg
+	AsmTokenizer      string
+	AsmTokenizerRules definition.Rules
 )
 
 func init() {
@@ -49,6 +55,14 @@ func init() {
 	GoTokenizerRules, err = extension.Load(GoTokenizer)
 	if err != nil {
 		panic(fmt.Errorf("unable to load GoTokenizer rules: %w", err))
+	}
+	AsmTokenizerRules, err = extension.Load(AsmTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load AsmTokenizer rules: %w", err))
+	}
+	ZigTokenizerRules, err = extension.Load(ZigTokenizer)
+	if err != nil {
+		panic(fmt.Errorf("unable to load ZigTokenizer rules: %w", err))
 	}
 }
 

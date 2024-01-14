@@ -1,6 +1,7 @@
 Source: #Sequence*
 #Sequence: (
     {tag:"span", class:"command"}:Token:("$> " (. !#EndOfLine)* . &#EndOfLine) /
+    {tag:"span", class:"comment"}:Token:("# " (. !#EndOfLine)* . &#EndOfLine) /
     None:.
 )
 

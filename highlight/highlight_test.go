@@ -64,3 +64,17 @@ func TestApi(t *testing.T) {
   <span class="identifier">require</span>.<span class="function">True</span>(<span class="identifier">t</span>, <span class="identifier">err</span> == <span class="identifier">nil</span>)
 }`, highlighted)
 }
+
+func TestAsm(t *testing.T) {
+	highlighted, err := Highlight(`TEXT     main.Check(SB), NOSPLIT|NOFRAME|ABIInternal, $0-0
+FUNCDATA $0, gclocals·g2BeySu+wFnoycgXfElmcg==(SB)
+FUNCDATA $1, gclocals·g2BeySu+wFnoycgXfElmcg==(SB)
+XORL     AX, AX
+RET`, AsmTokenizerRules)
+	require.Nil(t, err)
+	require.Equal(t, `<span class="keyword">TEXT</span>     main.Check(SB), NOSPLIT|NOFRAME|ABIInternal, <span class="number">$0</span><span class="number">-0</span>
+<span class="keyword">FUNCDATA</span> <span class="number">$0</span>, gclocals·g2BeySu+wFnoycgXfElmcg==(SB)
+<span class="keyword">FUNCDATA</span> <span class="number">$1</span>, gclocals·g2BeySu+wFnoycgXfElmcg==(SB)
+<span class="keyword">XORL</span>     AX, AX
+<span class="keyword">RET</span>`, highlighted)
+}

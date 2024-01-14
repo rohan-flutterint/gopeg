@@ -1,0 +1,12 @@
+Source: #Sequence*
+#Sequence: {tag:"span", class:"comment"}:Token:#Comment None:#EndOfLine / (
+  {tag:"span", class:"keyword"}:Token:#Instruction
+  (!#EndOfLine (None:#Identifier / {tag:"span", class:"number"}:Token:#Number / {tag:"span", class:"comment"}:Token:#Comment / None:.))*
+  None:#EndOfLine
+) / None:(!#Space !#EndOfLine !"#" .)+ / None:.
+#Comment: "# " (!#EndOfLine .)*
+#Instruction: =~"[a-z][a-z0-9]+" &#Space / =~"[A-Z][A-Z0-9]+" &#Space
+#Identifier: =~"[a-zA-Z][a-zA-Z0-9_]*"
+#Number: =~"\\$?(\\+|-)?\\d+(\\.\\d*)?"
+#EndOfLine: "\n" / !.
+#Space: " " / "\t" / #EndOfLine
